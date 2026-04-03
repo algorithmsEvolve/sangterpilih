@@ -73,11 +73,56 @@
         .show-5 { transform: rotateX(-90deg); }
         .show-6 { transform: rotateX(90deg); }
         [x-cloak] { display: none !important; }
+        .nb-spin-ring {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #ec4899, #8b5cf6, #6366f1, #ec4899);
+            animation: nb-spin 1s linear infinite;
+            mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+        }
+        @keyframes nb-spin { to { transform: rotate(360deg); } }
+        .nb-btn-spinner {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border-width: 2px;
+            border-style: solid;
+            border-color: rgba(248, 250, 252, 0.6);
+            border-top-color: transparent;
+            animation: nb-spin 0.7s linear infinite;
+        }
+        .nb-pulse-dot { animation: nb-pulse-dot 1.4s ease-in-out infinite; }
+        @keyframes nb-pulse-dot { 0%, 100% { opacity: .35; transform: scale(.92); } 50% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-6 items-center relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
 
     <div x-data="gameClient()" x-init="initEcho()" class="w-full max-w-5xl z-10">
+
+        <!-- Global loading: start game / leave room (DB + redirect) -->
+        <div x-show="loadingStart || loadingLeave"
+             x-cloak
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md">
+            <div class="glass-panel rounded-3xl px-10 py-12 max-w-sm w-full text-center border border-white/10 shadow-[0_0_60px_rgba(139,92,246,0.2)]">
+                <div class="nb-spin-ring mx-auto mb-6"></div>
+                <p class="text-lg font-semibold text-white tracking-tight"
+                   x-text="loadingLeave ? 'Meninggalkan room…' : 'Memulai permainan…'"></p>
+                <p class="text-sm text-slate-400 mt-2">Menyimpan ke server</p>
+                <div class="flex justify-center gap-1.5 mt-6">
+                    <span class="w-2 h-2 rounded-full bg-pink-500 nb-pulse-dot" style="animation-delay: 0ms"></span>
+                    <span class="w-2 h-2 rounded-full bg-violet-500 nb-pulse-dot" style="animation-delay: 150ms"></span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 nb-pulse-dot" style="animation-delay: 300ms"></span>
+                </div>
+            </div>
+        </div>
         
         <!-- Header -->
         <div class="flex justify-between items-center mb-10 w-full glass-panel px-6 py-4 rounded-xl">
@@ -87,8 +132,9 @@
             </div>
             <div class="text-right flex items-center space-x-4">
                 <p class="text-slate-400">You are <span class="font-bold text-violet-400">{{ $currentPlayer->name }}</span></p>
-                <button x-show="status === 'waiting'" @click="leaveRoom" class="text-red-400 hover:text-white transition text-xs font-bold border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/80 shadow-md">
-                    Keluar Room
+                <button x-show="status === 'waiting'" @click="leaveRoom" :disabled="loadingLeave || loadingStart" class="text-red-400 hover:text-white transition text-xs font-bold border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/80 shadow-md disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
+                    <span x-show="loadingLeave" class="nb-btn-spinner"></span>
+                    <span x-text="loadingLeave ? 'Keluar…' : 'Keluar Room'"></span>
                 </button>
             </div>
         </div>
@@ -113,8 +159,9 @@
 
                 <!-- Host Controls -->
                 <div x-show="isHost && status === 'waiting'" class="mt-6">
-                    <button @click="startGame" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 py-3 rounded-xl font-bold text-lg shadow-lg hover:shadow-green-500/25 transition">
-                        Start Game
+                    <button @click="startGame" :disabled="loadingStart || loadingLeave" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 py-3 rounded-xl font-bold text-lg shadow-lg hover:shadow-green-500/25 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <span x-show="loadingStart" class="nb-btn-spinner"></span>
+                        <span x-text="loadingStart ? 'Memulai…' : 'Start Game'"></span>
                     </button>
                     <p class="text-xs text-slate-400 text-center mt-2">New players won't be able to join</p>
                 </div>
@@ -131,7 +178,17 @@
                 </div>
 
                 <!-- Playing State -->
-                <div x-show="status === 'playing'" class="w-full flex flex-col items-center justify-center text-center">
+                <div x-show="status === 'playing'" class="w-full flex flex-col items-center justify-center text-center relative">
+                    
+                    <!-- Compact roll request feedback (DB round-trip) -->
+                    <div x-show="isRolling" x-transition
+                         class="absolute top-0 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-full bg-slate-900/90 border border-pink-500/30 text-pink-200 text-sm font-medium shadow-lg backdrop-blur-sm flex items-center gap-2">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+                        </span>
+                        Mengirim lemparan ke server…
+                    </div>
                     
                     <div class="mb-12 mt-4 flex justify-center">
                         <div class="scene">
@@ -161,8 +218,9 @@
                     <button x-show="currentTurn === currentPlayerId" 
                             @click="rollDice" 
                             :disabled="isRolling || isAnimating"
-                            class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-12 py-4 rounded-full font-bold text-2xl shadow-xl hover:shadow-pink-500/50 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span x-text="isRolling ? 'Rolling...' : 'ROLL DICE'"></span>
+                            class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-12 py-4 rounded-full font-bold text-2xl shadow-xl hover:shadow-pink-500/50 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-3">
+                        <span x-show="isRolling" class="nb-btn-spinner"></span>
+                        <span x-text="isRolling ? 'Rolling…' : 'ROLL DICE'"></span>
                     </button>
                 </div>
 
@@ -186,7 +244,10 @@
                         </ul>
                     </div>
                     
-                    <a href="#" @click.prevent="leaveRoom" class="inline-block mt-8 text-slate-400 hover:text-white transition underline">Leave Room</a>
+                    <a href="#" @click.prevent="leaveRoom" :class="loadingLeave ? 'opacity-50 pointer-events-none' : ''" class="inline-flex items-center gap-2 mt-8 text-slate-400 hover:text-white transition underline">
+                        <span x-show="loadingLeave" class="nb-btn-spinner"></span>
+                        <span x-text="loadingLeave ? 'Keluar…' : 'Leave Room'"></span>
+                    </a>
                 </div>
 
             </div>
@@ -238,6 +299,8 @@
                 queuedTurn: null,
                 queuedLeaderboard: null,
                 showKickModal: false,
+                loadingStart: false,
+                loadingLeave: false,
 
                 initEcho() {
                     const csrfToken = document.head.querySelector('meta[name="csrf-token"]').content;
@@ -324,22 +387,34 @@
                 },
 
                 startGame() {
+                    this.loadingStart = true;
                     fetch('/room/' + this.roomCode + '/start', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
                         }
-                    });
+                    })
+                        .then(async (res) => {
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok || !data.success) {
+                                alert(data.error || 'Gagal memulai permainan.');
+                            }
+                        })
+                        .catch(() => alert('Koneksi gagal. Coba lagi.'))
+                        .finally(() => { this.loadingStart = false; });
                 },
 
                 leaveRoom() {
+                    this.loadingLeave = true;
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
                     fetch('/room/' + this.roomCode + '/leave', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
                         }
                     }).then(() => {
                         window.location.href = '/';
@@ -354,17 +429,22 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
                         }
-                    }).then(res => res.json()).then(data => {
-                        if (!data.success) {
-                            alert(data.error);
+                    })
+                        .then((res) => res.json())
+                        .then((data) => {
+                            if (!data.success) {
+                                alert(data.error || 'Gagal melempar dadu.');
+                                this.isRolling = false;
+                            }
+                            // jika success, biarkan WebSocket yg men-trigger animasi dan pergantian giliran
+                        })
+                        .catch(() => {
+                            alert('Koneksi gagal. Coba lagi.');
                             this.isRolling = false;
-                        }
-                        // jika success, biarkan WebSocket yg men-trigger animasi dan pergantian giliran
-                    }).catch(error => {
-                        this.isRolling = false;
-                    });
+                        });
                 },
 
                 animateDice(result, pId, newScore) {
