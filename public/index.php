@@ -17,10 +17,6 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 // Register the Composer autoloader...
 require __DIR__.'/../vendor/autoload.php';
 
-// Bootstrap Laravel and handle the request...
-/** @var Application $app */
-$app = require_once __DIR__.'/../bootstrap/app.php';
-
 // Konfigurasi /tmp khusus untuk eksekusi serverless Vercel
 if (isset($_ENV['VERCEL']) || getenv('VERCEL')) {
     $storagePath = '/tmp/storage';
@@ -28,22 +24,30 @@ if (isset($_ENV['VERCEL']) || getenv('VERCEL')) {
         '/framework/cache/data',
         '/framework/sessions',
         '/framework/views',
-        '/logs'
+        '/logs',
+        '/bootstrap/cache'
     ];
     foreach ($directories as $dir) {
         if (!is_dir($storagePath . $dir)) {
             mkdir($storagePath . $dir, 0777, true);
         }
     }
+    $_ENV['APP_PACKAGES_CACHE'] = $storagePath . '/bootstrap/cache/packages.php';
+    $_ENV['APP_SERVICES_CACHE'] = $storagePath . '/bootstrap/cache/services.php';
+    $_ENV['VIEW_COMPILED_PATH'] = $storagePath . '/framework/views';
+    
+    // Untuk safety set Vercel env juga
+    putenv('APP_PACKAGES_CACHE=' . $_ENV['APP_PACKAGES_CACHE']);
+    putenv('APP_SERVICES_CACHE=' . $_ENV['APP_SERVICES_CACHE']);
+    putenv('VIEW_COMPILED_PATH=' . $_ENV['VIEW_COMPILED_PATH']);
+}
+
+// Bootstrap Laravel and handle the request...
+/** @var Application $app */
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+if (isset($storagePath)) {
     $app->useStoragePath($storagePath);
 }
 
-try {
-    $app->handleRequest(Request::capture());
-} catch (\Throwable $e) {
-    http_response_code(500);
-    echo "<h1>Critical Vercel Error</h1>";
-    echo "<p><strong>Message:</strong> " . $e->getMessage() . "</p>";
-    echo "<p><strong>File:</strong> " . $e->getFile() . ":" . $e->getLine() . "</p>";
-    echo "<pre>" . $e->getTraceAsString() . "</pre>";
-}
+$app->handleRequest(Request::capture());
