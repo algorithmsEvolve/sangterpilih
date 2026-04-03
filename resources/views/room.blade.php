@@ -95,6 +95,11 @@
         }
         .nb-pulse-dot { animation: nb-pulse-dot 1.4s ease-in-out infinite; }
         @keyframes nb-pulse-dot { 0%, 100% { opacity: .35; transform: scale(.92); } 50% { opacity: 1; transform: scale(1); } }
+        .nb-toast-enter { animation: nb-toast-enter .25s ease-out; }
+        @keyframes nb-toast-enter {
+            from { opacity: 0; transform: translateY(8px) scale(.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-6 items-center relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
@@ -124,14 +129,35 @@
             </div>
         </div>
         
+        <!-- Toast -->
+        <div x-show="toast.show"
+             x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-2"
+             class="fixed bottom-6 right-6 z-[120] max-w-sm">
+            <div class="nb-toast-enter px-4 py-3 rounded-xl border shadow-2xl backdrop-blur-sm"
+                 :class="toast.type === 'error' ? 'bg-red-900/80 border-red-400/50 text-red-100' : 'bg-emerald-900/80 border-emerald-400/50 text-emerald-100'">
+                <p class="text-sm font-semibold" x-text="toast.message"></p>
+            </div>
+        </div>
+        
         <!-- Header -->
         <div class="flex justify-between items-center mb-10 w-full glass-panel px-6 py-4 rounded-xl">
             <div>
                 <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">Number Battle</h1>
                 <p class="text-slate-400">Room: <span class="text-white font-bold">{{ $room->code }}</span></p>
+                <p class="text-xs text-slate-500 mt-1" x-show="status === 'playing'">Ronde <span class="text-white font-bold" x-text="currentRound"></span> / <span x-text="totalRounds"></span></p>
             </div>
             <div class="text-right flex items-center space-x-4">
                 <p class="text-slate-400">You are <span class="font-bold text-violet-400">{{ $currentPlayer->name }}</span></p>
+                <button x-show="status === 'playing'" @click="showInventoryModal = true"
+                        class="text-slate-200 hover:text-white transition text-xs font-bold border border-slate-400/30 px-3 py-1.5 rounded hover:bg-slate-500/30 shadow-md">
+                    Inventory
+                </button>
                 <button x-show="status === 'waiting'" @click="leaveRoom" :disabled="loadingLeave || loadingStart" class="text-red-400 hover:text-white transition text-xs font-bold border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/80 shadow-md disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
                     <span x-show="loadingLeave" class="nb-btn-spinner"></span>
                     <span x-text="loadingLeave ? 'Keluar…' : 'Keluar Room'"></span>
@@ -215,12 +241,34 @@
                         <span class="font-bold text-white" x-text="lastRollerName"></span> just rolled a <span class="font-bold text-yellow-400" x-text="recentDice"></span>!
                     </p>
 
+                    <div x-show="currentTurn === currentPlayerId" class="flex gap-3 mb-4">
+                        <button @click="showShopModal = true"
+                                class="px-5 py-2 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-400/25 text-indigo-100 text-sm font-bold transition">
+                            Shop
+                        </button>
+                        <button @click="showInventoryModal = true"
+                                class="px-5 py-2 rounded-full bg-slate-500/20 border border-slate-300/30 hover:bg-slate-400/25 text-slate-100 text-sm font-bold transition">
+                            Inventory
+                        </button>
+                    </div>
+                    <p x-show="currentTurn === currentPlayerId" class="text-xs text-slate-400 mb-4">
+                        Lempar dadu dulu, kalau udah baru pencet <span class="text-emerald-300 font-semibold">Akhiri Giliran</span>.
+                    </p>
+
                     <button x-show="currentTurn === currentPlayerId" 
                             @click="rollDice" 
-                            :disabled="isRolling || isAnimating"
+                            :disabled="isRolling || isAnimating || (me() && me().hasRolledThisTurn)"
                             class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-12 py-4 rounded-full font-bold text-2xl shadow-xl hover:shadow-pink-500/50 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-3">
                         <span x-show="isRolling" class="nb-btn-spinner"></span>
                         <span x-text="isRolling ? 'Rolling…' : 'ROLL DICE'"></span>
+                    </button>
+
+                    <button x-show="currentTurn === currentPlayerId"
+                            @click="endTurn"
+                            :disabled="isEndingTurn || !me() || !me().hasRolledThisTurn"
+                            class="mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-10 py-3 rounded-full font-bold text-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2">
+                        <span x-show="isEndingTurn" class="nb-btn-spinner"></span>
+                        <span x-text="isEndingTurn ? 'Mengakhiri…' : 'Akhiri Giliran'"></span>
                     </button>
                 </div>
 
@@ -250,6 +298,109 @@
                     </a>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- Shop Modal -->
+        <div x-show="showShopModal" x-cloak @click.self="showShopModal = false"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div class="glass-panel rounded-2xl w-full max-w-2xl p-6 border border-indigo-400/30"
+                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-2xl font-bold text-indigo-300">Shop Kartu Efek</h3>
+                    <button @click="showShopModal = false" class="text-slate-300 hover:text-white">Tutup</button>
+                </div>
+                <p class="text-sm text-slate-400 mb-4">Belanja pake poin lo. Mau nekat, mau licik, terserah tongkrongan lo.</p>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <template x-for="card in cardCatalog" :key="card.id">
+                        <div class="rounded-xl p-4 border" :class="cardTypeClass(card.type)">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <h4 class="font-bold text-lg" x-text="card.name"></h4>
+                                    <p class="text-xs uppercase tracking-wide mt-1"
+                                       :class="card.type === 'trap' ? 'text-red-300' : 'text-emerald-300'"
+                                       x-text="card.type"></p>
+                                </div>
+                                <div class="text-yellow-300 font-black" x-text="card.price + ' pts'"></div>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-2" x-text="'Gambar: ' + card.image"></p>
+                            <div class="mt-3 flex gap-2">
+                                <button @click="detailCard = card" class="px-3 py-2 rounded bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold">Liat Efek</button>
+                                <button @click="buyCard(card.id)"
+                                        :disabled="!canOpenShop() || isBuyingCard"
+                                        class="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold disabled:opacity-50">
+                                    <span x-text="isBuyingCard ? 'Beliin bentar…' : 'Beli'"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Modal -->
+        <div x-show="showInventoryModal" x-cloak @click.self="showInventoryModal = false"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div class="glass-panel rounded-2xl w-full max-w-3xl p-6 border border-slate-400/30"
+                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-2xl font-bold text-slate-100">Inventory Semua Player</h3>
+                    <button @click="showInventoryModal = false" class="text-slate-300 hover:text-white">Tutup</button>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-1">
+                    <template x-for="p in players" :key="'inv-' + p.id">
+                        <div class="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-violet-300" x-text="p.name"></h4>
+                                <span class="text-xs text-slate-400" x-text="'Poin: ' + p.score"></span>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <template x-if="!p.inventory || p.inventory.length === 0">
+                                    <span class="text-xs text-slate-500">Kosong, belum punya kartu.</span>
+                                </template>
+                                <template x-for="(cid, index) in (p.inventory || [])" :key="p.id + '-' + index">
+                                    <div class="flex items-center gap-1">
+                                        <button @click="detailCard = cardCatalog.find(c => c.id === cid)"
+                                                class="text-xs px-2.5 py-1.5 rounded border border-slate-500/40 bg-slate-800/70 hover:bg-slate-700">
+                                            <span x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></span>
+                                        </button>
+                                        <button x-show="p.id === currentPlayerId"
+                                                @click="useCard(cid)"
+                                                :disabled="isUsingCard || !canUseCard(cid, p.id)"
+                                                class="text-[11px] px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50">
+                                            <span x-text="isUsingCard ? '...' : 'Pakai'"></span>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Detail Modal -->
+        <div x-show="detailCard" x-cloak @click.self="detailCard = null"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div class="rounded-2xl w-full max-w-md p-6 border glass-panel"
+                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 :class="detailCard && detailCard.type === 'trap' ? 'border-red-400/40 bg-red-900/20' : 'border-emerald-400/40 bg-emerald-900/20'">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-2xl font-bold" x-text="detailCard?.name"></h3>
+                    <button @click="detailCard = null" class="text-slate-300 hover:text-white">Tutup</button>
+                </div>
+                <p class="text-xs uppercase mb-2" x-text="'Tipe: ' + (detailCard?.type || '-')"></p>
+                <p class="text-xs text-slate-300 mb-2" x-text="'Gambar: ' + (detailCard?.image || '-')"></p>
+                <p class="text-sm text-slate-100 leading-relaxed" x-text="detailCard?.description"></p>
             </div>
         </div>
 
@@ -289,24 +440,41 @@
                 currentPlayerId: {{ $currentPlayer->id }},
                 isHost: {{ $currentPlayer->is_host ? 'true' : 'false' }},
                 currentTurn: {{ $room->current_turn_player_id ?? 'null' }},
-                players: @json($room->players),
-                recentDice: 0,
-                lastRollerName: '',
+                currentRound: {{ $room->current_round ?? 1 }},
+                totalRounds: {{ $room->total_rounds ?? 5 }},
+                players: (@json($room->players->values())).map((p) => ({
+                    ...p,
+                    hasRolledThisTurn: !!p.has_rolled_this_turn,
+                    inventory: p.inventory || []
+                })),
+                recentDice: {{ $room->last_dice_result ?? 0 }},
+                lastRollerName: @json($room->last_roller_name ?? ''),
                 leaderboard: [],
-                isRolling: false,
-                isAnimating: false,
-                rollingChar: 1,
-                queuedTurn: null,
-                queuedLeaderboard: null,
+                cardCatalog: @json($cardCatalog ?? []),
                 showKickModal: false,
                 loadingStart: false,
                 loadingLeave: false,
+                isRolling: false,
+                isAnimating: false,
+                isEndingTurn: false,
+                isBuyingCard: false,
+                isUsingCard: false,
+                showShopModal: false,
+                showInventoryModal: false,
+                detailCard: null,
+                turnHasSkip: false,
+                turnMultiplierPlayerId: null,
+                toast: {
+                    show: false,
+                    message: '',
+                    type: 'success',
+                    timeout: null
+                },
 
                 initEcho() {
                     const csrfToken = document.head.querySelector('meta[name="csrf-token"]').content;
-                    
                     const isPusher = '{{ config('broadcasting.default') }}' === 'pusher';
-                    
+
                     window.Echo = new Echo({
                         broadcaster: 'pusher',
                         key: isPusher ? '{{ env('PUSHER_APP_KEY') }}' : 'numberbattlekey',
@@ -322,33 +490,18 @@
                     });
 
                     window.Echo.channel('room.' + this.roomCode)
-                        .listen('PlayerJoined', (e) => {
-                            this.players.push(e.player);
-                        })
-                        .listen('GameStarted', (e) => {
-                            this.status = 'playing';
-                            this.currentTurn = e.currentTurnPlayerId;
+                        .listen('RoomStateUpdated', (e) => {
+                            this.applyState(e.state);
                         })
                         .listen('DiceRolled', (e) => {
                             this.animateDice(e.diceResult, e.playerId, e.score);
                         })
-                        .listen('TurnChanged', (e) => {
-                            if (this.isAnimating) {
-                                this.queuedTurn = e.nextTurnPlayerId;
-                            } else {
-                                this.currentTurn = e.nextTurnPlayerId;
-                            }
-                        })
                         .listen('GameOver', (e) => {
-                            if (this.isAnimating) {
-                                this.queuedLeaderboard = e.leaderboard;
-                            } else {
-                                this.status = 'finished';
-                                this.leaderboard = e.leaderboard;
-                                this.triggerFireworks();
-                            }
+                            this.status = 'finished';
+                            this.leaderboard = e.leaderboard;
+                            this.triggerFireworks();
                         })
-                        .listen('RoomClosed', (e) => {
+                        .listen('RoomClosed', () => {
                             this.showKickModal = true;
                             setTimeout(() => {
                                 window.location.href = '/';
@@ -358,9 +511,7 @@
                             this.players = this.players.filter(p => p.id !== e.playerId);
                         });
 
-                    // Tangkap jika tab/browser ditutup
-                    window.addEventListener('beforeunload', (e) => {
-                        // Host akan menghancurkan room kapansaja. Player biasa hanya dibersihkan jika keluar sebelum start (waiting).
+                    window.addEventListener('beforeunload', () => {
                         if (this.isHost || this.status === 'waiting') {
                             navigator.sendBeacon('/room/' + this.roomCode + '/leave', new URLSearchParams({
                                 '_token': csrfToken
@@ -369,16 +520,26 @@
                     });
                 },
 
+                applyState(state) {
+                    if (!state) return;
+                    this.status = state.status;
+                    this.currentTurn = state.currentTurn;
+                    this.currentRound = state.currentRound;
+                    this.totalRounds = state.totalRounds;
+                    this.turnHasSkip = state.turnHasSkip;
+                    this.turnMultiplierPlayerId = state.turnMultiplierPlayerId;
+                    this.players = state.players ?? this.players;
+                    this.lastRollerName = state.lastRollerName || '';
+                    if (!this.isAnimating) {
+                        this.recentDice = state.lastDiceResult || 0;
+                    }
+                },
+
                 triggerFireworks() {
                     const canvas = document.getElementById('fireworks');
                     canvas.classList.remove('opacity-0');
-                    // Just simple confetti simulation in DOM could also work, but Fireworks helps!
-                    // Not fully implementing complex canvas fireworks to keep concise.
-                    // A simple background color blink is added:
                     document.body.classList.add('bg-gradient-to-r', 'from-amber-500', 'to-red-600', 'animate-pulse');
-                    setTimeout(() => {
-                        document.body.classList.remove('animate-pulse');
-                    }, 5000);
+                    setTimeout(() => document.body.classList.remove('animate-pulse'), 5000);
                 },
 
                 getCurrentPlayerName() {
@@ -386,65 +547,145 @@
                     return p ? p.name : 'Unknown';
                 },
 
-                startGame() {
-                    this.loadingStart = true;
-                    fetch('/room/' + this.roomCode + '/start', {
+                me() {
+                    return this.players.find(p => p.id === this.currentPlayerId) || null;
+                },
+
+                canOpenShop() {
+                    return this.status === 'playing' && this.currentTurn === this.currentPlayerId;
+                },
+
+                notify(message, type = 'success') {
+                    if (this.toast.timeout) clearTimeout(this.toast.timeout);
+                    this.toast.message = message;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    this.toast.timeout = setTimeout(() => {
+                        this.toast.show = false;
+                    }, 2600);
+                },
+
+                canUseCard(cardId, ownerPlayerId = null) {
+                    if (this.status !== 'playing') return false;
+                    if (ownerPlayerId !== null && ownerPlayerId !== this.currentPlayerId) return false;
+                    const mine = this.me();
+                    if (!mine || !(mine.inventory || []).includes(cardId)) return false;
+
+                    if (cardId === 'skip_si') {
+                        if (this.currentTurn === this.currentPlayerId) return false;
+                        if (this.turnHasSkip) return false;
+                        return true;
+                    }
+
+                    if (cardId === 'multiplier') {
+                        if (this.currentTurn !== this.currentPlayerId) return false;
+                        if (this.turnMultiplierPlayerId === this.currentPlayerId) return false;
+                        return true;
+                    }
+
+                    return false;
+                },
+
+                async postJson(url, body = {}) {
+                    const res = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                             'Accept': 'application/json'
-                        }
-                    })
-                        .then(async (res) => {
-                            const data = await res.json().catch(() => ({}));
-                            if (!res.ok || !data.success) {
-                                alert(data.error || 'Gagal memulai permainan.');
-                            }
-                        })
-                        .catch(() => alert('Koneksi gagal. Coba lagi.'))
-                        .finally(() => { this.loadingStart = false; });
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Terjadi error.');
+                    }
+                    if (data.state) {
+                        this.applyState(data.state);
+                    }
+                    return data;
+                },
+
+                async startGame() {
+                    this.loadingStart = true;
+                    try {
+                        await this.postJson('/room/' + this.roomCode + '/start');
+                        this.notify('Game dimulai. Jangan ngantuk, gas!');
+                    } catch (error) {
+                        this.notify(error.message || 'Gagal memulai permainan.', 'error');
+                    } finally {
+                        this.loadingStart = false;
+                    }
                 },
 
                 leaveRoom() {
                     this.loadingLeave = true;
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-                    fetch('/room/' + this.roomCode + '/leave', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        }
-                    }).then(() => {
-                        window.location.href = '/';
-                    }).catch(() => {
-                        window.location.href = '/';
-                    });
+                    this.postJson('/room/' + this.roomCode + '/leave')
+                        .finally(() => {
+                            window.location.href = '/';
+                        });
                 },
 
-                rollDice() {
+                async rollDice() {
                     this.isRolling = true;
-                    fetch('/room/' + this.roomCode + '/roll', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        }
-                    })
-                        .then((res) => res.json())
-                        .then((data) => {
-                            if (!data.success) {
-                                alert(data.error || 'Gagal melempar dadu.');
-                                this.isRolling = false;
-                            }
-                            // jika success, biarkan WebSocket yg men-trigger animasi dan pergantian giliran
-                        })
-                        .catch(() => {
-                            alert('Koneksi gagal. Coba lagi.');
-                            this.isRolling = false;
-                        });
+                    try {
+                        await this.postJson('/room/' + this.roomCode + '/roll');
+                    } catch (error) {
+                        this.isRolling = false;
+                        this.notify(error.message || 'Gagal melempar dadu.', 'error');
+                    }
+                },
+
+                async endTurn() {
+                    this.isEndingTurn = true;
+                    try {
+                        await this.postJson('/room/' + this.roomCode + '/end-turn');
+                        this.notify('Giliran kelar. Lanjut korban berikutnya.');
+                    } catch (error) {
+                        this.notify(error.message || 'Gagal mengakhiri giliran.', 'error');
+                    } finally {
+                        this.isEndingTurn = false;
+                    }
+                },
+
+                async buyCard(cardId) {
+                    this.isBuyingCard = true;
+                    try {
+                        await this.postJson('/room/' + this.roomCode + '/shop/buy', { card_id: cardId });
+                        this.notify('Mantap, kartu masuk inventory lo.');
+                    } catch (error) {
+                        this.notify(error.message || 'Gagal beli kartu.', 'error');
+                    } finally {
+                        this.isBuyingCard = false;
+                    }
+                },
+
+                async useCard(cardId) {
+                    if (!this.canUseCard(cardId, this.currentPlayerId)) {
+                        this.notify('Timing kartu ini belum cocok, sabar dikit.', 'error');
+                        return;
+                    }
+                    this.isUsingCard = true;
+                    try {
+                        await this.postJson('/room/' + this.roomCode + '/cards/use', { card_id: cardId });
+                        this.notify('Kartu dipakai. Semoga musuh makin kesel.');
+                    } catch (error) {
+                        this.notify(error.message || 'Gagal pakai kartu.', 'error');
+                    } finally {
+                        this.isUsingCard = false;
+                    }
+                },
+
+                cardCount(cardId) {
+                    const mine = this.me();
+                    const inv = mine?.inventory || [];
+                    return inv.filter((c) => c === cardId).length;
+                },
+
+                cardTypeClass(type) {
+                    return type === 'trap'
+                        ? 'border-red-400/40 bg-red-900/20'
+                        : 'border-emerald-400/40 bg-emerald-900/20';
                 },
 
                 animateDice(result, pId, newScore) {
@@ -454,45 +695,25 @@
                     }
 
                     this.isAnimating = true;
-                    this.isRolling = false; 
-                    this.recentDice = 0; 
+                    this.isRolling = false;
+                    this.recentDice = 0;
 
-                    // Force restart CSS animation
                     this.$nextTick(() => {
                         const diceEl = document.querySelector('.dice');
                         if (diceEl) {
                             diceEl.style.animation = 'none';
-                            void diceEl.offsetHeight; /* trigger reflow */
-                            diceEl.style.animation = null; 
+                            void diceEl.offsetHeight;
+                            diceEl.style.animation = null;
                         }
                     });
 
                     setTimeout(() => {
                         this.recentDice = result;
                         this.isAnimating = false;
-                        
                         if (pIndex > -1) {
                             this.players[pIndex].score = newScore;
                         }
-
-                        // Flush buffered events
-                        if (this.queuedTurn !== null) {
-                            this.currentTurn = this.queuedTurn;
-                            this.queuedTurn = null;
-                        }
-                        
-                        if (this.queuedLeaderboard !== null) {
-                            const board = this.queuedLeaderboard;
-                            this.queuedLeaderboard = null;
-                            
-                            // Jeda 3 detik sebelum menampilkan game over
-                            setTimeout(() => {
-                                this.status = 'finished';
-                                this.leaderboard = board;
-                                this.triggerFireworks();
-                            }, 3000);
-                        }
-                    }, 1500);
+                    }, 1200);
                 }
             };
         }

@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Player extends Model
 {
     protected $guarded = [];
+    protected $casts = [
+        'inventory' => 'array',
+    ];
 
     public function room()
     {

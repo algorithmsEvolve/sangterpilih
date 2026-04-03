@@ -2,37 +2,159 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Room;
-use App\Models\Player;
-use App\Events\PlayerJoined;
-use App\Events\GameStarted;
 use App\Events\DiceRolled;
-use App\Events\TurnChanged;
 use App\Events\GameOver;
-use App\Events\RoomClosed;
+use App\Events\GameStarted;
+use App\Events\PlayerJoined;
 use App\Events\PlayerLeft;
+use App\Events\RoomClosed;
+use App\Events\RoomStateUpdated;
+use App\Models\Player;
+use App\Models\Room;
+use Illuminate\Http\Request;
 
 class GameController extends Controller
 {
+    private const CARD_SKIP = 'skip_si';
+    private const CARD_MULTIPLIER = 'multiplier';
+
+    private function cardCatalog(): array
+    {
+        return [
+            self::CARD_SKIP => [
+                'id' => self::CARD_SKIP,
+                'name' => 'Sekip si',
+                'type' => 'trap',
+                'color' => 'red',
+                'price' => 8,
+                'image' => 'seseorang yang mengacuhkan orang lain',
+                'description' => 'Skip giliran player aktif. Kalo dia udah lempar dadu, poinnya dibalikin kayak belum lempar. Brutal tapi fair.',
+            ],
+            self::CARD_MULTIPLIER => [
+                'id' => self::CARD_MULTIPLIER,
+                'name' => 'Multipler',
+                'type' => 'spell',
+                'color' => 'green',
+                'price' => 6,
+                'image' => 'tulisan 8x8 6x4 dicoret lalu ada x2',
+                'description' => 'Aktifin di giliran lo, sebelum lempar. Hasil dadu lo jadi x2. Gaspol!',
+            ],
+        ];
+    }
+
+    private function normalizeInventory(?array $inventory): array
+    {
+        return array_values(array_filter($inventory ?? [], function ($cardId) {
+            return is_string($cardId);
+        }));
+    }
+
+    private function buildRoomState(Room $room): array
+    {
+        $room->load('players');
+        $players = $room->players->sortBy('id')->values()->map(function (Player $p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'score' => $p->score,
+                'is_host' => (bool) $p->is_host,
+                'hasRolledThisTurn' => (bool) $p->has_rolled_this_turn,
+                'inventory' => $this->normalizeInventory($p->inventory),
+            ];
+        })->toArray();
+
+        return [
+            'status' => $room->status,
+            'currentTurn' => $room->current_turn_player_id,
+            'currentRound' => (int) $room->current_round,
+            'totalRounds' => (int) $room->total_rounds,
+            'turnHasSkip' => (bool) $room->turn_has_skip,
+            'turnMultiplierPlayerId' => $room->turn_multiplier_player_id,
+            'lastDiceResult' => $room->last_dice_result,
+            'lastRollerName' => $room->last_roller_name,
+            'players' => $players,
+        ];
+    }
+
+    private function broadcastState(Room $room): void
+    {
+        $room->refresh();
+        broadcast(new RoomStateUpdated($room->code, $this->buildRoomState($room)));
+    }
+
+    private function startTurnSnapshot(Room $room, Player $activePlayer): void
+    {
+        $room->active_turn_snapshot = [
+            'player_id' => $activePlayer->id,
+            'start_score' => (int) $activePlayer->score,
+            'rolled' => false,
+        ];
+        $room->turn_has_skip = false;
+        $room->turn_multiplier_player_id = null;
+        $room->save();
+    }
+
+    private function advanceTurn(Room $room): ?array
+    {
+        $players = $room->players()->orderBy('id')->get();
+        if ($players->count() < 2) {
+            $room->status = 'finished';
+            $room->save();
+            return null;
+        }
+
+        $currentPlayer = $players->firstWhere('id', $room->current_turn_player_id);
+        if ($currentPlayer) {
+            $currentPlayer->has_rolled_this_turn = false;
+            $currentPlayer->save();
+        }
+
+        $nextTurnIndex = ((int) $room->turn_index) + 1;
+        $isNextRound = $nextTurnIndex >= $players->count();
+
+        if ($isNextRound) {
+            $nextTurnIndex = 0;
+            $room->current_round = ((int) $room->current_round) + 1;
+        }
+
+        if (((int) $room->current_round) > ((int) $room->total_rounds)) {
+            $room->status = 'finished';
+            $room->save();
+            $leaderboard = $room->players()->orderByDesc('score')->get()->toArray();
+            broadcast(new GameOver($room->code, $leaderboard));
+            $this->broadcastState($room);
+            return null;
+        }
+
+        $nextPlayer = $players[$nextTurnIndex];
+        $room->turn_index = $nextTurnIndex;
+        $room->current_turn_player_id = $nextPlayer->id;
+        $room->last_dice_result = null;
+        $room->last_roller_name = null;
+        $room->save();
+
+        $this->startTurnSnapshot($room, $nextPlayer);
+        return ['nextPlayerId' => $nextPlayer->id];
+    }
+
     public function createRoom(Request $request)
     {
         $request->validate([
             'host_name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:rooms,code'
+            'code' => 'required|string|max:50|unique:rooms,code',
         ]);
 
         $room = Room::create([
             'code' => $request->code,
-            'status' => 'waiting'
+            'status' => 'waiting',
         ]);
 
         $player = $room->players()->create([
             'name' => $request->host_name,
-            'is_host' => true
+            'is_host' => true,
+            'inventory' => [],
         ]);
 
-        // store player id in session so we know who is who
         session(['player_id' => $player->id]);
 
         return redirect('/room/' . $room->code);
@@ -42,7 +164,7 @@ class GameController extends Controller
     {
         $request->validate([
             'player_name' => 'required|string|max:255',
-            'code' => 'required|string|exists:rooms,code'
+            'code' => 'required|string|exists:rooms,code',
         ]);
 
         $room = Room::where('code', $request->code)->firstOrFail();
@@ -53,7 +175,8 @@ class GameController extends Controller
 
         $player = $room->players()->create([
             'name' => $request->player_name,
-            'is_host' => false
+            'is_host' => false,
+            'inventory' => [],
         ]);
 
         session(['player_id' => $player->id]);
@@ -67,14 +190,15 @@ class GameController extends Controller
     {
         $room = Room::where('code', $code)->with('players')->firstOrFail();
         $currentPlayerId = session('player_id');
-        
+
         if (!$currentPlayerId) {
             return redirect('/')->with('error', 'Silakan join/create room terlebih dahulu.');
         }
-        
-        $currentPlayer = Player::find($currentPlayerId);
 
-        return view('room', compact('room', 'currentPlayer'));
+        $currentPlayer = Player::findOrFail($currentPlayerId);
+        $cardCatalog = array_values($this->cardCatalog());
+
+        return view('room', compact('room', 'currentPlayer', 'cardCatalog'));
     }
 
     public function startGame($code)
@@ -84,7 +208,7 @@ class GameController extends Controller
         $currentPlayer = Player::find($currentPlayerId);
 
         if (!$currentPlayer || !$currentPlayer->is_host) {
-            return response()->json(['error' => 'Not host'], 403);
+            return response()->json(['error' => 'Cuma host yang bisa start game.'], 403);
         }
 
         $players = $room->players()->orderBy('id')->get();
@@ -92,13 +216,23 @@ class GameController extends Controller
             return response()->json(['error' => 'Butuh minimal 2 pemain!'], 400);
         }
 
+        $firstPlayer = $players->first();
         $room->status = 'playing';
-        $room->current_turn_player_id = $players->first()->id;
+        $room->current_turn_player_id = $firstPlayer->id;
+        $room->current_round = 1;
+        $room->total_rounds = max(5, (int) $room->total_rounds);
+        $room->turn_index = 0;
+        $room->turn_has_skip = false;
+        $room->turn_multiplier_player_id = null;
+        $room->last_dice_result = null;
+        $room->last_roller_name = null;
         $room->save();
 
         broadcast(new GameStarted($room->code, $room->current_turn_player_id));
+        $this->startTurnSnapshot($room, $firstPlayer);
+        $this->broadcastState($room);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'state' => $this->buildRoomState($room->fresh())]);
     }
 
     public function rollDice(Request $request, $code)
@@ -106,6 +240,10 @@ class GameController extends Controller
         $room = Room::where('code', $code)->firstOrFail();
         $currentPlayerId = session('player_id');
         $player = Player::find($currentPlayerId);
+
+        if (!$player) {
+            return response()->json(['error' => 'Player tidak ditemukan.'], 404);
+        }
 
         if ($room->status !== 'playing') {
             return response()->json(['error' => 'Game is not in playing state'], 400);
@@ -115,43 +253,194 @@ class GameController extends Controller
             return response()->json(['error' => 'Bukan giliranmu!'], 400);
         }
 
-        if ($player->has_rolled) {
+        if ($player->has_rolled_this_turn) {
             return response()->json(['error' => 'Kamu sudah melempar dadu!'], 400);
         }
 
-        // Roll the dice
         $diceResult = rand(1, 6);
+        if ((int) $room->turn_multiplier_player_id === (int) $player->id) {
+            $diceResult *= 2;
+            $room->turn_multiplier_player_id = null;
+        }
+
+        $snapshot = $room->active_turn_snapshot ?? [];
+        $snapshot['rolled'] = true;
+        $room->active_turn_snapshot = $snapshot;
+
         $player->score += $diceResult;
-        $player->has_rolled = true;
+        $player->has_rolled_this_turn = true;
         $player->save();
 
+        $room->last_dice_result = $diceResult;
+        $room->last_roller_name = $player->name;
+        $room->save();
+
         broadcast(new DiceRolled($room->code, $player->id, $diceResult, $player->score));
-
-        // Check if everyone rolled
-        $unrolledPlayer = $room->players()->where('has_rolled', false)->orderBy('id')->first();
-
-        if ($unrolledPlayer) {
-            $room->current_turn_player_id = $unrolledPlayer->id;
-            $room->save();
-            
-            // Turn Changed
-            broadcast(new TurnChanged($room->code, $unrolledPlayer->id));
-        } else {
-            // Game Over
-            $room->status = 'finished';
-            $room->save();
-
-            $leaderboard = $room->players()->orderByDesc('score')->get()->toArray();
-            broadcast(new GameOver($room->code, $leaderboard));
-        }
+        $this->broadcastState($room);
 
         return response()->json([
             'success' => true,
             'diceResult' => $diceResult,
             'score' => $player->score,
-            'nextTurn' => $unrolledPlayer ? $unrolledPlayer->id : null,
-            'gameOver' => !$unrolledPlayer
+            'state' => $this->buildRoomState($room->fresh()),
         ]);
+    }
+
+    public function endTurn($code)
+    {
+        $room = Room::where('code', $code)->firstOrFail();
+        $currentPlayerId = session('player_id');
+        $player = Player::find($currentPlayerId);
+
+        if (!$player || $room->current_turn_player_id !== $player->id) {
+            return response()->json(['error' => 'Bukan giliranmu!'], 400);
+        }
+
+        if (!$player->has_rolled_this_turn) {
+            return response()->json(['error' => 'Lempar dadu dulu, baru akhiri giliran.'], 400);
+        }
+
+        $this->advanceTurn($room);
+        $this->broadcastState($room->fresh());
+
+        return response()->json(['success' => true]);
+    }
+
+    public function buyCard(Request $request, $code)
+    {
+        $request->validate([
+            'card_id' => 'required|string',
+        ]);
+
+        $room = Room::where('code', $code)->firstOrFail();
+        $player = Player::find(session('player_id'));
+        $catalog = $this->cardCatalog();
+        $cardId = $request->card_id;
+
+        if (!$player) {
+            return response()->json(['error' => 'Player tidak ditemukan.'], 404);
+        }
+
+        if ($room->status !== 'playing') {
+            return response()->json(['error' => 'Shop cuma aktif saat game berjalan.'], 400);
+        }
+
+        if ((int) $room->current_turn_player_id !== (int) $player->id) {
+            return response()->json(['error' => 'Shop hanya bisa diakses player yang lagi jalan.'], 400);
+        }
+
+        if (!isset($catalog[$cardId])) {
+            return response()->json(['error' => 'Kartu tidak valid.'], 400);
+        }
+
+        $card = $catalog[$cardId];
+        if ($player->score < $card['price']) {
+            return response()->json(['error' => 'Poin lo belum cukup buat beli kartu ini.'], 400);
+        }
+
+        $inventory = $this->normalizeInventory($player->inventory);
+        $inventory[] = $cardId;
+        $player->inventory = $inventory;
+        $player->score -= $card['price'];
+        $player->save();
+
+        $this->broadcastState($room);
+        return response()->json(['success' => true, 'state' => $this->buildRoomState($room->fresh())]);
+    }
+
+    public function useCard(Request $request, $code)
+    {
+        $request->validate([
+            'card_id' => 'required|string',
+        ]);
+
+        $room = Room::where('code', $code)->firstOrFail();
+        $player = Player::find(session('player_id'));
+        $catalog = $this->cardCatalog();
+        $cardId = $request->card_id;
+
+        if (!$player) {
+            return response()->json(['error' => 'Player tidak ditemukan.'], 404);
+        }
+
+        if ($room->status !== 'playing') {
+            return response()->json(['error' => 'Kartu cuma bisa dipakai saat game berjalan.'], 400);
+        }
+
+        if (!isset($catalog[$cardId])) {
+            return response()->json(['error' => 'Kartu tidak valid.'], 400);
+        }
+
+        $inventory = $this->normalizeInventory($player->inventory);
+        $cardIndex = array_search($cardId, $inventory, true);
+        if ($cardIndex === false) {
+            return response()->json(['error' => 'Kartu ini gak ada di inventory lo.'], 400);
+        }
+
+        if ($cardId === self::CARD_MULTIPLIER) {
+            if ((int) $room->current_turn_player_id !== (int) $player->id) {
+                return response()->json(['error' => 'Spell multiplier cuma bisa dipakai saat giliran lo.'], 400);
+            }
+
+            if ((int) $room->turn_multiplier_player_id === (int) $player->id) {
+                return response()->json(['error' => 'Multiplier lo udah aktif di giliran ini.'], 400);
+            }
+
+            if ($player->has_rolled_this_turn) {
+                $snapshot = $room->active_turn_snapshot ?? [];
+                $startScore = (int) ($snapshot['start_score'] ?? $player->score);
+                $turnGain = max(0, $player->score - $startScore);
+                if ($turnGain <= 0) {
+                    return response()->json(['error' => 'Belum ada hasil roll yang bisa digandain.'], 400);
+                }
+                $player->score = $startScore + ($turnGain * 2);
+                $player->save();
+                if ($room->last_dice_result) {
+                    $room->last_dice_result = $room->last_dice_result * 2;
+                }
+                $room->turn_multiplier_player_id = null;
+                $room->save();
+            } else {
+                $room->turn_multiplier_player_id = $player->id;
+                $room->save();
+            }
+        }
+
+        if ($cardId === self::CARD_SKIP) {
+            if ((int) $room->current_turn_player_id === (int) $player->id) {
+                return response()->json(['error' => 'Trap skip dipakai buat ngerjain orang lain, bukan diri sendiri.'], 400);
+            }
+
+            if ($room->turn_has_skip) {
+                return response()->json(['error' => 'Skip udah kepake di giliran ini, gak bisa dobel.'], 400);
+            }
+
+            $target = Player::find($room->current_turn_player_id);
+            if ($target) {
+                $snapshot = $room->active_turn_snapshot ?? [];
+                if (($snapshot['player_id'] ?? null) === $target->id && isset($snapshot['start_score'])) {
+                    $target->score = (int) $snapshot['start_score'];
+                    $target->has_rolled_this_turn = false;
+                    $target->save();
+                    $room->last_dice_result = null;
+                    $room->last_roller_name = null;
+                }
+            }
+
+            $room->turn_has_skip = true;
+            $room->save();
+        }
+
+        unset($inventory[$cardIndex]);
+        $player->inventory = array_values($inventory);
+        $player->save();
+
+        if ($cardId === self::CARD_SKIP) {
+            $this->advanceTurn($room->fresh());
+        }
+
+        $this->broadcastState($room->fresh());
+        return response()->json(['success' => true]);
     }
 
     public function leaveRoom(Request $request, $code)
@@ -168,7 +457,7 @@ class GameController extends Controller
                 broadcast(new RoomClosed($room->code));
                 $room->delete();
             }
-        } else if ($player) {
+        } elseif ($player) {
             $playerId = $player->id;
             $player->delete();
             broadcast(new PlayerLeft($code, $playerId));

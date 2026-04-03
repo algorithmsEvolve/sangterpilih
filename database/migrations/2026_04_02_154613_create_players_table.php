@@ -10,11 +10,12 @@ return new class extends Migration
     {
         Schema::create('players', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('room_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('room_id');
             $table->string('name');
             $table->integer('score')->default(0);
             $table->boolean('is_host')->default(false);
             $table->boolean('has_rolled')->default(false);
+            $table->index('room_id');
             $table->timestamps();
         });
     }
