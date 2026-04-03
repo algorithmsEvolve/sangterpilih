@@ -1,5 +1,9 @@
 <?php
 
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
@@ -20,11 +24,16 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 // Konfigurasi /tmp khusus untuk eksekusi serverless Vercel
 if (isset($_ENV['VERCEL']) || getenv('VERCEL')) {
     $storagePath = '/tmp/storage';
-    if (!is_dir($storagePath)) {
-        mkdir($storagePath . '/framework/cache/data', 0777, true);
-        mkdir($storagePath . '/framework/sessions', 0777, true);
-        mkdir($storagePath . '/framework/views', 0777, true);
-        mkdir($storagePath . '/logs', 0777, true);
+    $directories = [
+        '/framework/cache/data',
+        '/framework/sessions',
+        '/framework/views',
+        '/logs'
+    ];
+    foreach ($directories as $dir) {
+        if (!is_dir($storagePath . $dir)) {
+            mkdir($storagePath . $dir, 0777, true);
+        }
     }
     $app->useStoragePath($storagePath);
 }
