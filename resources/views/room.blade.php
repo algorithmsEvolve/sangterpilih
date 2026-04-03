@@ -75,7 +75,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col p-6 items-center relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
+<body class="min-h-screen flex flex-col p-6 items-center relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
 
     <div x-data="gameClient()" x-init="initEcho()" class="w-full max-w-5xl z-10">
         

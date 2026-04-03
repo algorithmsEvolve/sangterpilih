@@ -17,7 +17,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-black">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-x-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-black">
     <!-- Decorative Elements -->
     <div class="absolute top-10 left-10 w-32 h-32 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-float"></div>
     <div class="absolute bottom-10 right-10 w-40 h-40 bg-pink-600 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-float" style="animation-delay: 2s;"></div>
