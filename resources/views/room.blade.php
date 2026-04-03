@@ -100,6 +100,24 @@
             from { opacity: 0; transform: translateY(8px) scale(.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        .nb-card-shell {
+            background: linear-gradient(180deg, #c6a76c 0%, #9a7b42 100%);
+            border: 2px solid #f1d095;
+            border-radius: 10px;
+            box-shadow: 0 10px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.18);
+        }
+        .nb-card-art {
+            border: 2px solid rgba(21, 21, 21, .55);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #111827;
+        }
+        .nb-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .nb-effect-burst { animation: nb-burst 0.7s ease-out; }
+        @keyframes nb-burst {
+            0% { opacity: 0; transform: scale(.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-6 items-center relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
@@ -144,6 +162,16 @@
                 <p class="text-sm font-semibold" x-text="toast.message"></p>
             </div>
         </div>
+
+        <!-- Card Effect Announcement -->
+        <div x-show="effectNotice.show" x-cloak class="fixed inset-0 z-[110] flex items-center justify-center pointer-events-none p-4">
+            <div class="nb-effect-burst max-w-md w-full rounded-2xl border px-6 py-5 text-center shadow-2xl backdrop-blur-sm"
+                 :class="effectNotice.type === 'trap' ? 'bg-red-900/80 border-red-400/60 text-red-100' : 'bg-emerald-900/80 border-emerald-400/60 text-emerald-100'">
+                <p class="text-xs uppercase tracking-wide opacity-80" x-text="effectNotice.type === 'trap' ? 'Trap Activated' : 'Spell Activated'"></p>
+                <h4 class="text-2xl font-extrabold mt-1" x-text="effectNotice.cardName"></h4>
+                <p class="text-sm mt-2" x-text="effectNotice.message"></p>
+            </div>
+        </div>
         
         <!-- Header -->
         <div class="flex justify-between items-center mb-10 w-full glass-panel px-6 py-4 rounded-xl">
@@ -154,10 +182,7 @@
             </div>
             <div class="text-right flex items-center space-x-4">
                 <p class="text-slate-400">You are <span class="font-bold text-violet-400">{{ $currentPlayer->name }}</span></p>
-                <button x-show="status === 'playing'" @click="showInventoryModal = true"
-                        class="text-slate-200 hover:text-white transition text-xs font-bold border border-slate-400/30 px-3 py-1.5 rounded hover:bg-slate-500/30 shadow-md">
-                    Inventory
-                </button>
+                
                 <button x-show="status === 'waiting'" @click="leaveRoom" :disabled="loadingLeave || loadingStart" class="text-red-400 hover:text-white transition text-xs font-bold border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/80 shadow-md disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
                     <span x-show="loadingLeave" class="nb-btn-spinner"></span>
                     <span x-text="loadingLeave ? 'Keluar…' : 'Keluar Room'"></span>
@@ -241,7 +266,7 @@
                         <span class="font-bold text-white" x-text="lastRollerName"></span> just rolled a <span class="font-bold text-yellow-400" x-text="recentDice"></span>!
                     </p>
 
-                    <div x-show="currentTurn === currentPlayerId" class="flex gap-3 mb-4">
+                    <div class="flex gap-3 mb-4">
                         <button @click="showShopModal = true"
                                 class="px-5 py-2 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-400/25 text-indigo-100 text-sm font-bold transition">
                             Shop
@@ -251,7 +276,7 @@
                             Inventory
                         </button>
                     </div>
-                    <p x-show="currentTurn === currentPlayerId" class="text-xs text-slate-400 mb-4">
+                    <p class="text-xs text-slate-400 mb-4" x-show="currentTurn === currentPlayerId">
                         Lempar dadu dulu, kalau udah baru pencet <span class="text-emerald-300 font-semibold">Akhiri Giliran</span>.
                     </p>
 
@@ -316,21 +341,22 @@
                 <p class="text-sm text-slate-400 mb-4">Belanja pake poin lo. Mau nekat, mau licik, terserah tongkrongan lo.</p>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <template x-for="card in cardCatalog" :key="card.id">
-                        <div class="rounded-xl p-4 border" :class="cardTypeClass(card.type)">
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <h4 class="font-bold text-lg" x-text="card.name"></h4>
-                                    <p class="text-xs uppercase tracking-wide mt-1"
-                                       :class="card.type === 'trap' ? 'text-red-300' : 'text-emerald-300'"
-                                       x-text="card.type"></p>
-                                </div>
-                                <div class="text-yellow-300 font-black" x-text="card.price + ' pts'"></div>
+                        <div class="nb-card-shell p-3 text-slate-100">
+                            <div class="flex items-center justify-between text-[11px] mb-2">
+                                <span class="font-black tracking-wide" x-text="card.name"></span>
+                                <span class="font-black text-yellow-200" x-text="card.price + ' pts'"></span>
                             </div>
-                            <p class="text-xs text-slate-300 mt-2" x-text="'Gambar: ' + card.image"></p>
+                            <div class="nb-card-art h-32 mb-2">
+                                <img :src="card.image_url" :alt="card.name">
+                            </div>
+                            <div class="text-[10px] uppercase tracking-wider mb-1"
+                                 :class="card.type === 'trap' ? 'text-red-200' : 'text-emerald-200'"
+                                 x-text="card.type === 'trap' ? 'Trap Card' : 'Spell Card'"></div>
+                            <p class="text-[11px] text-slate-200 line-clamp-2" x-text="card.description"></p>
                             <div class="mt-3 flex gap-2">
                                 <button @click="detailCard = card" class="px-3 py-2 rounded bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold">Liat Efek</button>
                                 <button @click="buyCard(card.id)"
-                                        :disabled="!canOpenShop() || isBuyingCard"
+                                        :disabled="isBuyingCard"
                                         class="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold disabled:opacity-50">
                                     <span x-text="isBuyingCard ? 'Beliin bentar…' : 'Beli'"></span>
                                 </button>
@@ -350,34 +376,31 @@
                  x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
                 <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-2xl font-bold text-slate-100">Inventory Semua Player</h3>
+                    <h3 class="text-2xl font-bold text-slate-100">Inventory Lo Doang</h3>
                     <button @click="showInventoryModal = false" class="text-slate-300 hover:text-white">Tutup</button>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-1">
-                    <template x-for="p in players" :key="'inv-' + p.id">
-                        <div class="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-                            <div class="flex items-center justify-between">
-                                <h4 class="font-bold text-violet-300" x-text="p.name"></h4>
-                                <span class="text-xs text-slate-400" x-text="'Poin: ' + p.score"></span>
+                    <template x-if="myInventory.length === 0">
+                        <div class="col-span-2 rounded-xl border border-white/10 bg-slate-900/60 p-6 text-center text-slate-400">
+                            Inventory lo kosong. Nabung poin dulu, beli kartu, baru rusuh.
+                        </div>
+                    </template>
+                    <template x-for="(cid, index) in myInventory" :key="'mine-' + index">
+                        <div class="nb-card-shell p-3 text-slate-100">
+                            <div class="nb-card-art h-36 mb-2">
+                                <img :src="(cardCatalog.find(c => c.id === cid) || {}).image_url" :alt="cid">
                             </div>
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                <template x-if="!p.inventory || p.inventory.length === 0">
-                                    <span class="text-xs text-slate-500">Kosong, belum punya kartu.</span>
-                                </template>
-                                <template x-for="(cid, index) in (p.inventory || [])" :key="p.id + '-' + index">
-                                    <div class="flex items-center gap-1">
-                                        <button @click="detailCard = cardCatalog.find(c => c.id === cid)"
-                                                class="text-xs px-2.5 py-1.5 rounded border border-slate-500/40 bg-slate-800/70 hover:bg-slate-700">
-                                            <span x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></span>
-                                        </button>
-                                        <button x-show="p.id === currentPlayerId"
-                                                @click="useCard(cid)"
-                                                :disabled="isUsingCard || !canUseCard(cid, p.id)"
-                                                class="text-[11px] px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50">
-                                            <span x-text="isUsingCard ? '...' : 'Pakai'"></span>
-                                        </button>
-                                    </div>
-                                </template>
+                            <div class="text-sm font-black" x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></div>
+                            <div class="text-[11px] mt-1"
+                                 :class="((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'text-red-200' : 'text-emerald-200'"
+                                 x-text="((cardCatalog.find(c => c.id === cid) || {}).type || '').toUpperCase()"></div>
+                            <div class="mt-3 flex gap-2">
+                                <button @click="detailCard = cardCatalog.find(c => c.id === cid)" class="px-3 py-2 rounded bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold">Detail</button>
+                                <button @click="useCard(cid)"
+                                        :disabled="isUsingCard || !canUseCard(cid)"
+                                        class="text-xs px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50">
+                                    <span x-text="isUsingCard ? '...' : 'Pakai'"></span>
+                                </button>
                             </div>
                         </div>
                     </template>
@@ -399,8 +422,26 @@
                     <button @click="detailCard = null" class="text-slate-300 hover:text-white">Tutup</button>
                 </div>
                 <p class="text-xs uppercase mb-2" x-text="'Tipe: ' + (detailCard?.type || '-')"></p>
+                <div class="nb-card-art h-40 mb-3">
+                    <img :src="detailCard?.image_url" :alt="detailCard?.name">
+                </div>
                 <p class="text-xs text-slate-300 mb-2" x-text="'Gambar: ' + (detailCard?.image || '-')"></p>
                 <p class="text-sm text-slate-100 leading-relaxed" x-text="detailCard?.description"></p>
+            </div>
+        </div>
+
+        <!-- Trap Confirmation Modal -->
+        <div x-show="trapPrompt.show" x-cloak class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div class="glass-panel rounded-2xl w-full max-w-md p-6 border border-red-400/40">
+                <h3 class="text-2xl font-bold text-red-300 mb-2">Trap Kesempatan!</h3>
+                <p class="text-sm text-slate-200 leading-relaxed">
+                    Giliran <span class="font-bold text-white" x-text="trapPrompt.targetName"></span> lagi jalan.
+                    Lo punya <span class="font-bold text-red-300">Sekip si</span>. Mau jebak sekarang?
+                </p>
+                <div class="mt-5 flex justify-end gap-2">
+                    <button @click="trapPrompt.show = false" class="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-sm">Nanti dulu</button>
+                    <button @click="confirmTrapUse" class="px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-sm font-bold">Pake Sekarang</button>
+                </div>
             </div>
         </div>
 
@@ -442,11 +483,11 @@
                 currentTurn: {{ $room->current_turn_player_id ?? 'null' }},
                 currentRound: {{ $room->current_round ?? 1 }},
                 totalRounds: {{ $room->total_rounds ?? 5 }},
-                players: (@json($room->players->values())).map((p) => ({
+                players: (@json($playersPublic)).map((p) => ({
                     ...p,
                     hasRolledThisTurn: !!p.has_rolled_this_turn,
-                    inventory: p.inventory || []
                 })),
+                myInventory: @json($myInventory ?? []),
                 recentDice: {{ $room->last_dice_result ?? 0 }},
                 lastRollerName: @json($room->last_roller_name ?? ''),
                 leaderboard: [],
@@ -464,6 +505,9 @@
                 detailCard: null,
                 turnHasSkip: false,
                 turnMultiplierPlayerId: null,
+                lastPromptTurnKey: null,
+                trapPrompt: { show: false, targetName: '' },
+                effectNotice: { show: false, type: 'spell', cardName: '', message: '', timeout: null },
                 toast: {
                     show: false,
                     message: '',
@@ -496,6 +540,16 @@
                         .listen('DiceRolled', (e) => {
                             this.animateDice(e.diceResult, e.playerId, e.score);
                         })
+                        .listen('CardEffectUsed', (e) => {
+                            const p = e.payload || {};
+                            this.showEffectNotice(
+                                p.cardType || 'spell',
+                                p.cardName || 'Kartu',
+                                p.cardType === 'trap'
+                                    ? (p.usedByPlayerName + ' nembak trap ke ' + (p.targetPlayerName || 'target') + '!')
+                                    : (p.usedByPlayerName + ' ngeluarin spell: ' + (p.note || 'efek aktif'))
+                            );
+                        })
                         .listen('GameOver', (e) => {
                             this.status = 'finished';
                             this.leaderboard = e.leaderboard;
@@ -518,6 +572,8 @@
                             }));
                         }
                     });
+
+                    this.$nextTick(() => this.maybePromptTrapOnTurnChange());
                 },
 
                 applyState(state) {
@@ -533,6 +589,7 @@
                     if (!this.isAnimating) {
                         this.recentDice = state.lastDiceResult || 0;
                     }
+                    this.maybePromptTrapOnTurnChange();
                 },
 
                 triggerFireworks() {
@@ -552,7 +609,7 @@
                 },
 
                 canOpenShop() {
-                    return this.status === 'playing' && this.currentTurn === this.currentPlayerId;
+                    return this.status === 'playing';
                 },
 
                 notify(message, type = 'success') {
@@ -574,12 +631,14 @@
                     if (cardId === 'skip_si') {
                         if (this.currentTurn === this.currentPlayerId) return false;
                         if (this.turnHasSkip) return false;
+                        if (!this.myInventory.includes('skip_si')) return false;
                         return true;
                     }
 
                     if (cardId === 'multiplier') {
                         if (this.currentTurn !== this.currentPlayerId) return false;
                         if (this.turnMultiplierPlayerId === this.currentPlayerId) return false;
+                        if (!this.myInventory.includes('multiplier')) return false;
                         return true;
                     }
 
@@ -602,6 +661,9 @@
                     }
                     if (data.state) {
                         this.applyState(data.state);
+                    }
+                    if (Array.isArray(data.myInventory)) {
+                        this.myInventory = data.myInventory;
                     }
                     return data;
                 },
@@ -677,9 +739,35 @@
                 },
 
                 cardCount(cardId) {
-                    const mine = this.me();
-                    const inv = mine?.inventory || [];
-                    return inv.filter((c) => c === cardId).length;
+                    return this.myInventory.filter((c) => c === cardId).length;
+                },
+
+                maybePromptTrapOnTurnChange() {
+                    if (this.status !== 'playing') return;
+                    const turnKey = `${this.currentRound}-${this.currentTurn}`;
+                    if (this.lastPromptTurnKey === turnKey) return;
+                    this.lastPromptTurnKey = turnKey;
+                    if (this.currentTurn === this.currentPlayerId) return;
+                    if (this.turnHasSkip) return;
+                    if (!this.myInventory.includes('skip_si')) return;
+                    this.trapPrompt.targetName = this.getCurrentPlayerName();
+                    this.trapPrompt.show = true;
+                },
+
+                async confirmTrapUse() {
+                    this.trapPrompt.show = false;
+                    await this.useCard('skip_si');
+                },
+
+                showEffectNotice(type, cardName, message) {
+                    if (this.effectNotice.timeout) clearTimeout(this.effectNotice.timeout);
+                    this.effectNotice.type = type;
+                    this.effectNotice.cardName = cardName;
+                    this.effectNotice.message = message;
+                    this.effectNotice.show = true;
+                    this.effectNotice.timeout = setTimeout(() => {
+                        this.effectNotice.show = false;
+                    }, 2400);
                 },
 
                 cardTypeClass(type) {

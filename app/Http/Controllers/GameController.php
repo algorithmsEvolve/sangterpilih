@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CardEffectUsed;
 use App\Events\DiceRolled;
 use App\Events\GameOver;
 use App\Events\GameStarted;
@@ -28,6 +29,7 @@ class GameController extends Controller
                 'color' => 'red',
                 'price' => 8,
                 'image' => 'seseorang yang mengacuhkan orang lain',
+                'image_url' => '/images/cards/skip-si.svg',
                 'description' => 'Skip giliran player aktif. Kalo dia udah lempar dadu, poinnya dibalikin kayak belum lempar. Brutal tapi fair.',
             ],
             self::CARD_MULTIPLIER => [
@@ -37,6 +39,7 @@ class GameController extends Controller
                 'color' => 'green',
                 'price' => 6,
                 'image' => 'tulisan 8x8 6x4 dicoret lalu ada x2',
+                'image_url' => '/images/cards/multipler.svg',
                 'description' => 'Aktifin di giliran lo, sebelum lempar. Hasil dadu lo jadi x2. Gaspol!',
             ],
         ];
@@ -49,17 +52,17 @@ class GameController extends Controller
         }));
     }
 
-    private function buildRoomState(Room $room): array
+    private function buildRoomState(Room $room, bool $includeInventories = false): array
     {
         $room->load('players');
-        $players = $room->players->sortBy('id')->values()->map(function (Player $p) {
+        $players = $room->players->sortBy('id')->values()->map(function (Player $p) use ($includeInventories) {
             return [
                 'id' => $p->id,
                 'name' => $p->name,
                 'score' => $p->score,
                 'is_host' => (bool) $p->is_host,
                 'hasRolledThisTurn' => (bool) $p->has_rolled_this_turn,
-                'inventory' => $this->normalizeInventory($p->inventory),
+                'inventory' => $includeInventories ? $this->normalizeInventory($p->inventory) : [],
             ];
         })->toArray();
 
@@ -79,7 +82,7 @@ class GameController extends Controller
     private function broadcastState(Room $room): void
     {
         $room->refresh();
-        broadcast(new RoomStateUpdated($room->code, $this->buildRoomState($room)));
+        broadcast(new RoomStateUpdated($room->code, $this->buildRoomState($room, false)));
     }
 
     private function startTurnSnapshot(Room $room, Player $activePlayer): void
@@ -197,8 +200,18 @@ class GameController extends Controller
 
         $currentPlayer = Player::findOrFail($currentPlayerId);
         $cardCatalog = array_values($this->cardCatalog());
+        $playersPublic = $room->players->sortBy('id')->values()->map(function (Player $p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'score' => $p->score,
+                'is_host' => (bool) $p->is_host,
+                'has_rolled_this_turn' => (bool) $p->has_rolled_this_turn,
+            ];
+        })->toArray();
+        $myInventory = $this->normalizeInventory($currentPlayer->inventory);
 
-        return view('room', compact('room', 'currentPlayer', 'cardCatalog'));
+        return view('room', compact('room', 'currentPlayer', 'cardCatalog', 'playersPublic', 'myInventory'));
     }
 
     public function startGame($code)
@@ -232,7 +245,11 @@ class GameController extends Controller
         $this->startTurnSnapshot($room, $firstPlayer);
         $this->broadcastState($room);
 
-        return response()->json(['success' => true, 'state' => $this->buildRoomState($room->fresh())]);
+        return response()->json([
+            'success' => true,
+            'state' => $this->buildRoomState($room->fresh(), false),
+            'myInventory' => $this->normalizeInventory($currentPlayer->inventory),
+        ]);
     }
 
     public function rollDice(Request $request, $code)
@@ -282,7 +299,8 @@ class GameController extends Controller
             'success' => true,
             'diceResult' => $diceResult,
             'score' => $player->score,
-            'state' => $this->buildRoomState($room->fresh()),
+            'state' => $this->buildRoomState($room->fresh(), false),
+            'myInventory' => $this->normalizeInventory($player->inventory),
         ]);
     }
 
@@ -325,10 +343,6 @@ class GameController extends Controller
             return response()->json(['error' => 'Shop cuma aktif saat game berjalan.'], 400);
         }
 
-        if ((int) $room->current_turn_player_id !== (int) $player->id) {
-            return response()->json(['error' => 'Shop hanya bisa diakses player yang lagi jalan.'], 400);
-        }
-
         if (!isset($catalog[$cardId])) {
             return response()->json(['error' => 'Kartu tidak valid.'], 400);
         }
@@ -345,7 +359,11 @@ class GameController extends Controller
         $player->save();
 
         $this->broadcastState($room);
-        return response()->json(['success' => true, 'state' => $this->buildRoomState($room->fresh())]);
+        return response()->json([
+            'success' => true,
+            'state' => $this->buildRoomState($room->fresh(), false),
+            'myInventory' => $this->normalizeInventory($player->fresh()->inventory),
+        ]);
     }
 
     public function useCard(Request $request, $code)
@@ -377,6 +395,8 @@ class GameController extends Controller
             return response()->json(['error' => 'Kartu ini gak ada di inventory lo.'], 400);
         }
 
+        $effectPayload = null;
+
         if ($cardId === self::CARD_MULTIPLIER) {
             if ((int) $room->current_turn_player_id !== (int) $player->id) {
                 return response()->json(['error' => 'Spell multiplier cuma bisa dipakai saat giliran lo.'], 400);
@@ -400,9 +420,29 @@ class GameController extends Controller
                 }
                 $room->turn_multiplier_player_id = null;
                 $room->save();
+                $effectPayload = [
+                    'cardId' => $cardId,
+                    'cardName' => $catalog[$cardId]['name'],
+                    'cardType' => $catalog[$cardId]['type'],
+                    'usedByPlayerId' => $player->id,
+                    'usedByPlayerName' => $player->name,
+                    'targetPlayerId' => $player->id,
+                    'targetPlayerName' => $player->name,
+                    'note' => $player->name . ' nge-boost hasil dadu jadi x2.',
+                ];
             } else {
                 $room->turn_multiplier_player_id = $player->id;
                 $room->save();
+                $effectPayload = [
+                    'cardId' => $cardId,
+                    'cardName' => $catalog[$cardId]['name'],
+                    'cardType' => $catalog[$cardId]['type'],
+                    'usedByPlayerId' => $player->id,
+                    'usedByPlayerName' => $player->name,
+                    'targetPlayerId' => $player->id,
+                    'targetPlayerName' => $player->name,
+                    'note' => $player->name . ' siapin multiplier. Roll berikutnya bakal x2.',
+                ];
             }
         }
 
@@ -429,6 +469,18 @@ class GameController extends Controller
 
             $room->turn_has_skip = true;
             $room->save();
+            $targetPlayerId = $target ? $target->id : null;
+            $targetPlayerName = $target ? $target->name : null;
+            $effectPayload = [
+                'cardId' => $cardId,
+                'cardName' => $catalog[$cardId]['name'],
+                'cardType' => $catalog[$cardId]['type'],
+                'usedByPlayerId' => $player->id,
+                'usedByPlayerName' => $player->name,
+                'targetPlayerId' => $targetPlayerId,
+                'targetPlayerName' => $targetPlayerName,
+                'note' => $player->name . ' ngeskip giliran ' . ($targetPlayerName ?? 'target') . '. Sadis!',
+            ];
         }
 
         unset($inventory[$cardIndex]);
@@ -439,8 +491,16 @@ class GameController extends Controller
             $this->advanceTurn($room->fresh());
         }
 
+        if ($effectPayload) {
+            broadcast(new CardEffectUsed($room->code, $effectPayload));
+        }
+
         $this->broadcastState($room->fresh());
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'myInventory' => $this->normalizeInventory($player->fresh()->inventory),
+            'state' => $this->buildRoomState($room->fresh(), false),
+        ]);
     }
 
     public function leaveRoom(Request $request, $code)
