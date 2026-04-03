@@ -15,5 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            echo "<h1>ORIGINAL EXCEPTION</h1>";
+            echo "<p><strong>Message:</strong> " . $e->getMessage() . "</p>";
+            echo "<p><strong>File:</strong> " . $e->getFile() . ":" . $e->getLine() . "</p>";
+            echo "<pre>" . $e->getTraceAsString() . "</pre>";
+            die();
+        });
     })->create();
