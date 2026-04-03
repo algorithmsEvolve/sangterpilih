@@ -29,7 +29,7 @@ class GameController extends Controller
                 'color' => 'red',
                 'price' => 5,
                 'image' => 'seseorang yang mengacuhkan orang lain',
-                'image_url' => asset('images/cards/skip-si.svg'),
+                'image_url' => '/images/cards/skip-si.svg',
                 'description' => 'Skip giliran player aktif. Kalo dia udah lempar dadu, poinnya dibalikin kayak belum lempar. Brutal tapi fair.',
             ],
             self::CARD_MULTIPLIER => [
@@ -39,7 +39,7 @@ class GameController extends Controller
                 'color' => 'green',
                 'price' => 8,
                 'image' => 'tulisan 8x8 6x4 dicoret lalu ada x2',
-                'image_url' => asset('images/cards/multipler.svg'),
+                'image_url' => '/images/cards/multipler.svg',
                 'description' => 'Aktifin di giliran lo, sebelum lempar. Hasil dadu lo jadi x2. Gaspol!',
             ],
         ];
