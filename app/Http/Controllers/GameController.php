@@ -27,9 +27,9 @@ class GameController extends Controller
                 'name' => 'Sekip si',
                 'type' => 'trap',
                 'color' => 'red',
-                'price' => 8,
+                'price' => 5,
                 'image' => 'seseorang yang mengacuhkan orang lain',
-                'image_url' => '/images/cards/skip-si.svg',
+                'image_url' => asset('images/cards/skip-si.svg'),
                 'description' => 'Skip giliran player aktif. Kalo dia udah lempar dadu, poinnya dibalikin kayak belum lempar. Brutal tapi fair.',
             ],
             self::CARD_MULTIPLIER => [
@@ -37,9 +37,9 @@ class GameController extends Controller
                 'name' => 'Multipler',
                 'type' => 'spell',
                 'color' => 'green',
-                'price' => 6,
+                'price' => 8,
                 'image' => 'tulisan 8x8 6x4 dicoret lalu ada x2',
-                'image_url' => '/images/cards/multipler.svg',
+                'image_url' => asset('images/cards/multipler.svg'),
                 'description' => 'Aktifin di giliran lo, sebelum lempar. Hasil dadu lo jadi x2. Gaspol!',
             ],
         ];
@@ -75,6 +75,8 @@ class GameController extends Controller
             'turnMultiplierPlayerId' => $room->turn_multiplier_player_id,
             'lastDiceResult' => $room->last_dice_result,
             'lastRollerName' => $room->last_roller_name,
+            'pendingTrapConfirmations' => $room->pending_trap_confirmations ?? [],
+            'trapTargetPlayerId' => $room->trap_target_player_id,
             'players' => $players,
         ];
     }
@@ -94,6 +96,8 @@ class GameController extends Controller
         ];
         $room->turn_has_skip = false;
         $room->turn_multiplier_player_id = null;
+        $room->pending_trap_confirmations = null;
+        $room->trap_target_player_id = null;
         $room->save();
     }
 
@@ -318,9 +322,56 @@ class GameController extends Controller
             return response()->json(['error' => 'Lempar dadu dulu, baru akhiri giliran.'], 400);
         }
 
+        // Logic check trap
+        $potentialTrapUsers = $room->players()
+            ->where('id', '!=', $player->id)
+            ->get()
+            ->filter(function ($p) {
+                $inv = $p->inventory ?? [];
+                return in_array(self::CARD_SKIP, $inv);
+            });
+
+        if ($potentialTrapUsers->count() > 0) {
+            $room->status = 'awaiting_trap_confirmation';
+            $room->pending_trap_confirmations = $potentialTrapUsers->pluck('id')->toArray();
+            $room->trap_target_player_id = $player->id;
+            $room->save();
+            $this->broadcastState($room->fresh());
+            return response()->json(['success' => true]);
+        }
+
         $this->advanceTurn($room);
         $this->broadcastState($room->fresh());
 
+        return response()->json(['success' => true]);
+    }
+
+    public function skipTrap(Request $request, $code)
+    {
+        $room = Room::where('code', $code)->firstOrFail();
+        $currentPlayerId = session('player_id');
+
+        if ($room->status !== 'awaiting_trap_confirmation') {
+            return response()->json(['error' => 'Gak ada trap yang perlu dikonfirmasi.'], 400);
+        }
+
+        $pending = $room->pending_trap_confirmations ?? [];
+        if (!in_array($currentPlayerId, $pending)) {
+            return response()->json(['error' => 'Lo gak perlu konfirmasi trap.'], 400);
+        }
+
+        $pending = array_values(array_filter($pending, function($id) use ($currentPlayerId) {
+            return $id != $currentPlayerId;
+        }));
+        $room->pending_trap_confirmations = $pending;
+
+        if (empty($pending)) {
+            $room->status = 'playing';
+            $this->advanceTurn($room);
+        }
+
+        $room->save();
+        $this->broadcastState($room->fresh());
         return response()->json(['success' => true]);
     }
 
@@ -488,6 +539,9 @@ class GameController extends Controller
         $player->save();
 
         if ($cardId === self::CARD_SKIP) {
+            $room->status = 'playing';
+            $room->pending_trap_confirmations = null;
+            $room->save();
             $this->advanceTurn($room->fresh());
         }
 

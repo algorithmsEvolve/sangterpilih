@@ -15,4 +15,5 @@ Route::post('/room/{code}/roll', [GameController::class, 'rollDice']);
 Route::post('/room/{code}/end-turn', [GameController::class, 'endTurn']);
 Route::post('/room/{code}/shop/buy', [GameController::class, 'buyCard']);
 Route::post('/room/{code}/cards/use', [GameController::class, 'useCard']);
+Route::post('/room/{code}/cards/skip-trap', [GameController::class, 'skipTrap']);
 Route::post('/room/{code}/leave', [GameController::class, 'leaveRoom']);

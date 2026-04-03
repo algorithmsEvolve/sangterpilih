@@ -101,18 +101,37 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .nb-card-shell {
+            position: relative;
+            aspect-ratio: 5 / 8; /* Mentok panjang Yu-Gi-Oh ratio */
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-size: 200% 200%;
+        }
+        .nb-card-shell.trap {
+            background: linear-gradient(135deg, #7c2d12 0%, #450a0a 100%);
+            border-color: #f87171;
+        }
+        .nb-card-shell.spell {
+            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+            border-color: #34d399;
+        }
+        .nb-card-shell.default {
             background: linear-gradient(180deg, #c6a76c 0%, #9a7b42 100%);
-            border: 2px solid #f1d095;
-            border-radius: 10px;
-            box-shadow: 0 10px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.18);
+            border-color: #f1d095;
         }
         .nb-card-art {
-            border: 2px solid rgba(21, 21, 21, .55);
-            border-radius: 8px;
+            border: 2px solid rgba(0, 0, 0, 0.6);
+            border-radius: 6px;
             overflow: hidden;
-            background: #111827;
+            background: #000;
+            margin-bottom: 8px;
+            flex-grow: 1;
         }
-        .nb-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .nb-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.85; transition: 0.3s; }
+        .nb-card-shell:hover .nb-card-art img { opacity: 1; transform: scale(1.05); }
         .nb-effect-burst { animation: nb-burst 0.7s ease-out; }
         @keyframes nb-burst {
             0% { opacity: 0; transform: scale(.85); }
@@ -341,24 +360,23 @@
                 <p class="text-sm text-slate-400 mb-4">Belanja pake poin lo. Mau nekat, mau licik, terserah tongkrongan lo.</p>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <template x-for="card in cardCatalog" :key="card.id">
-                        <div class="nb-card-shell p-3 text-slate-100">
-                            <div class="flex items-center justify-between text-[11px] mb-2">
-                                <span class="font-black tracking-wide" x-text="card.name"></span>
-                                <span class="font-black text-yellow-200" x-text="card.price + ' pts'"></span>
+                        <div class="nb-card-shell text-slate-100 flex flex-col" :class="card.type === 'trap' ? 'trap' : (card.type === 'spell' ? 'spell' : 'default')">
+                            <div class="flex items-center justify-between text-[11px] font-black mb-2 px-1">
+                                <span class="tracking-wide" x-text="card.name"></span>
+                                <span class="text-yellow-300" x-text="card.price + ' pts'"></span>
                             </div>
-                            <div class="nb-card-art h-32 mb-2">
+                            <div class="nb-card-art">
                                 <img :src="card.image_url" :alt="card.name">
                             </div>
-                            <div class="text-[10px] uppercase tracking-wider mb-1"
-                                 :class="card.type === 'trap' ? 'text-red-200' : 'text-emerald-200'"
-                                 x-text="card.type === 'trap' ? 'Trap Card' : 'Spell Card'"></div>
-                            <p class="text-[11px] text-slate-200 line-clamp-2" x-text="card.description"></p>
-                            <div class="mt-3 flex gap-2">
-                                <button @click="detailCard = card" class="px-3 py-2 rounded bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold">Liat Efek</button>
+                            <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
+                                 x-text="card.type === 'trap' ? '[ Trap Card ]' : '[ Spell Card ]'"></div>
+                            <p class="text-[10px] text-slate-200 leading-tight mb-2 px-1 line-clamp-3" x-text="card.description"></p>
+                            <div class="mt-auto flex gap-1.5 p-1">
+                                <button @click="detailCard = card" class="flex-1 py-1.5 rounded bg-black/40 hover:bg-black/60 text-[10px] font-bold transition">LOOK</button>
                                 <button @click="buyCard(card.id)"
                                         :disabled="isBuyingCard"
-                                        class="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold disabled:opacity-50">
-                                    <span x-text="isBuyingCard ? 'Beliin bentar…' : 'Beli'"></span>
+                                        class="flex-1 py-1.5 rounded bg-white/10 hover:bg-white/20 text-[10px] font-bold transition border border-white/10 disabled:opacity-50">
+                                    <span x-text="isBuyingCard ? '...' : 'BUY'"></span>
                                 </button>
                             </div>
                         </div>
@@ -386,20 +404,22 @@
                         </div>
                     </template>
                     <template x-for="(cid, index) in myInventory" :key="'mine-' + index">
-                        <div class="nb-card-shell p-3 text-slate-100">
-                            <div class="nb-card-art h-36 mb-2">
+                        <div class="nb-card-shell text-slate-100 flex flex-col" 
+                             :class="((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'trap' : (((cardCatalog.find(c => c.id === cid) || {}).type) === 'spell' ? 'spell' : 'default')">
+                            <div class="flex items-center justify-between text-[11px] font-black mb-2 px-1">
+                                <span class="tracking-wide" x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></span>
+                            </div>
+                            <div class="nb-card-art">
                                 <img :src="(cardCatalog.find(c => c.id === cid) || {}).image_url" :alt="cid">
                             </div>
-                            <div class="text-sm font-black" x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></div>
-                            <div class="text-[11px] mt-1"
-                                 :class="((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'text-red-200' : 'text-emerald-200'"
-                                 x-text="((cardCatalog.find(c => c.id === cid) || {}).type || '').toUpperCase()"></div>
-                            <div class="mt-3 flex gap-2">
-                                <button @click="detailCard = cardCatalog.find(c => c.id === cid)" class="px-3 py-2 rounded bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold">Detail</button>
+                            <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
+                                 x-text="'[ ' + ((cardCatalog.find(c => c.id === cid) || {}).type || '???').toUpperCase() + ' CARD ]'"></div>
+                            <div class="mt-auto flex gap-1.5 p-1">
+                                <button @click="detailCard = cardCatalog.find(c => c.id === cid)" class="flex-1 py-1.5 rounded bg-black/40 hover:bg-black/60 text-[10px] font-bold transition">DETAIL</button>
                                 <button @click="useCard(cid)"
                                         :disabled="isUsingCard || !canUseCard(cid)"
-                                        class="text-xs px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50">
-                                    <span x-text="isUsingCard ? '...' : 'Pakai'"></span>
+                                        class="flex-1 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold transition disabled:opacity-50">
+                                    <span x-text="isUsingCard ? '...' : 'USE'"></span>
                                 </button>
                             </div>
                         </div>
@@ -431,16 +451,38 @@
         </div>
 
         <!-- Trap Confirmation Modal -->
-        <div x-show="trapPrompt.show" x-cloak class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div class="glass-panel rounded-2xl w-full max-w-md p-6 border border-red-400/40">
-                <h3 class="text-2xl font-bold text-red-300 mb-2">Trap Kesempatan!</h3>
-                <p class="text-sm text-slate-200 leading-relaxed">
-                    Giliran <span class="font-bold text-white" x-text="trapPrompt.targetName"></span> lagi jalan.
-                    Lo punya <span class="font-bold text-red-300">Sekip si</span>. Mau jebak sekarang?
+        <div x-show="status === 'awaiting_trap_confirmation' && pendingTrapConfirmations.includes(currentPlayerId)" 
+             x-cloak 
+             class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+            <div class="glass-panel rounded-3xl w-full max-w-md p-8 border border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.3)] text-center">
+                <div class="text-5xl mb-4">⚠️</div>
+                <h3 class="text-3xl font-extrabold text-red-400 mb-2">Trap Opportunity!</h3>
+                <p class="text-slate-300 leading-relaxed mb-6">
+                    Giliran <span class="font-bold text-white" x-text="getTrapTargetName()"></span> baru aja kelar.
+                    Lo punya <span class="font-bold text-red-300">Sekip si</span>. Mau nembak trap sekarang atau biarin dia lanjut?
                 </p>
-                <div class="mt-5 flex justify-end gap-2">
-                    <button @click="trapPrompt.show = false" class="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-sm">Nanti dulu</button>
-                    <button @click="confirmTrapUse" class="px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-sm font-bold">Pake Sekarang</button>
+                <div class="flex flex-col gap-3">
+                    <button @click="confirmTrapUse" :disabled="isUsingCard" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-lg shadow-lg transition disabled:opacity-50">
+                        <span x-text="isUsingCard ? 'Nembak...' : 'PAKAI TRAP SEKARANG!'"></span>
+                    </button>
+                    <button @click="skipTrapPhase" :disabled="isSkippingTrap" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition disabled:opacity-50">
+                        <span x-text="isSkippingTrap ? 'Sabar...' : 'Gak Dulu, Biarin'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Waiting for Others Confirmation -->
+        <div x-show="status === 'awaiting_trap_confirmation' && !pendingTrapConfirmations.includes(currentPlayerId)" 
+             x-cloak 
+             class="fixed inset-0 z-[125] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+            <div class="glass-panel rounded-2xl p-6 text-center max-w-sm">
+                <div class="nb-spin-ring mx-auto mb-4 border-red-500"></div>
+                <p class="text-sm font-bold text-slate-400">Nungguin orang lain galau mau pake Trap atau nggak...</p>
+                <div class="mt-4 flex justify-center gap-1">
+                    <template x-for="pid in pendingTrapConfirmations" :key="pid">
+                        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -503,11 +545,9 @@
                 showShopModal: false,
                 showInventoryModal: false,
                 detailCard: null,
-                turnHasSkip: false,
-                turnMultiplierPlayerId: null,
-                lastPromptTurnKey: null,
-                trapPrompt: { show: false, targetName: '' },
-                effectNotice: { show: false, type: 'spell', cardName: '', message: '', timeout: null },
+                pendingTrapConfirmations: @json($room->pending_trap_confirmations ?? []),
+                trapTargetPlayerId: {{ $room->trap_target_player_id ?? 'null' }},
+                isSkippingTrap: false,
                 toast: {
                     show: false,
                     message: '',
@@ -584,12 +624,13 @@
                     this.totalRounds = state.totalRounds;
                     this.turnHasSkip = state.turnHasSkip;
                     this.turnMultiplierPlayerId = state.turnMultiplierPlayerId;
+                    this.pendingTrapConfirmations = state.pendingTrapConfirmations ?? [];
+                    this.trapTargetPlayerId = state.trapTargetPlayerId;
                     this.players = state.players ?? this.players;
                     this.lastRollerName = state.lastRollerName || '';
                     if (!this.isAnimating) {
                         this.recentDice = state.lastDiceResult || 0;
                     }
-                    this.maybePromptTrapOnTurnChange();
                 },
 
                 triggerFireworks() {
@@ -629,9 +670,8 @@
                     if (!mine || !(mine.inventory || []).includes(cardId)) return false;
 
                     if (cardId === 'skip_si') {
-                        if (this.currentTurn === this.currentPlayerId) return false;
+                        if (this.currentTurn === this.currentPlayerId && this.status === 'playing') return false;
                         if (this.turnHasSkip) return false;
-                        if (!this.myInventory.includes('skip_si')) return false;
                         return true;
                     }
 
@@ -742,21 +782,24 @@
                     return this.myInventory.filter((c) => c === cardId).length;
                 },
 
-                maybePromptTrapOnTurnChange() {
-                    if (this.status !== 'playing') return;
-                    const turnKey = `${this.currentRound}-${this.currentTurn}`;
-                    if (this.lastPromptTurnKey === turnKey) return;
-                    this.lastPromptTurnKey = turnKey;
-                    if (this.currentTurn === this.currentPlayerId) return;
-                    if (this.turnHasSkip) return;
-                    if (!this.myInventory.includes('skip_si')) return;
-                    this.trapPrompt.targetName = this.getCurrentPlayerName();
-                    this.trapPrompt.show = true;
+                confirmTrapUse() {
+                    this.useCard('skip_si');
                 },
 
-                async confirmTrapUse() {
-                    this.trapPrompt.show = false;
-                    await this.useCard('skip_si');
+                getTrapTargetName() {
+                    const p = this.players.find(p => p.id === this.trapTargetPlayerId);
+                    return p ? p.name : 'Target';
+                },
+
+                async skipTrapPhase() {
+                    this.isSkippingTrap = true;
+                    try {
+                        await this.postJson('/room/' + this.roomCode + '/cards/skip-trap');
+                    } catch (error) {
+                        this.notify(error.message || 'Gagal skip trap.', 'error');
+                    } finally {
+                        this.isSkippingTrap = false;
+                    }
                 },
 
                 showEffectNotice(type, cardName, message) {

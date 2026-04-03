@@ -9,6 +9,7 @@ class Room extends Model
     protected $guarded = [];
     protected $casts = [
         'active_turn_snapshot' => 'array',
+        'pending_trap_confirmations' => 'array',
     ];
 
     public function players()
