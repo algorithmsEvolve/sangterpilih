@@ -109,6 +109,8 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background-size: 200% 200%;
+            display: flex;
+            flex-direction: column;
         }
         .nb-card-shell.trap {
             background: linear-gradient(135deg, #7c2d12 0%, #450a0a 100%);
@@ -128,15 +130,21 @@
             overflow: hidden;
             background: #000;
             margin-bottom: 8px;
-            flex-grow: 1;
+            height: 45%; /* Fixed art height to leave space for text */
+            flex-shrink: 0;
         }
         .nb-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.85; transition: 0.3s; }
         .nb-card-shell:hover .nb-card-art img { opacity: 1; transform: scale(1.05); }
-        .nb-effect-burst { animation: nb-burst 0.7s ease-out; }
-        @keyframes nb-burst {
-            0% { opacity: 0; transform: scale(.85); }
-            100% { opacity: 1; transform: scale(1); }
+        .nb-card-desc-box {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px;
+            border-radius: 4px;
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 8px;
         }
+        .nb-effect-burst { animation: nb-burst 0.7s ease-out; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-6 items-center relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
@@ -360,7 +368,7 @@
                 <p class="text-sm text-slate-400 mb-4">Belanja pake poin lo. Mau nekat, mau licik, terserah tongkrongan lo.</p>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <template x-for="card in cardCatalog" :key="card.id">
-                        <div class="nb-card-shell text-slate-100 flex flex-col" :class="card.type === 'trap' ? 'trap' : (card.type === 'spell' ? 'spell' : 'default')">
+                        <div class="nb-card-shell text-slate-100" :class="card.type === 'trap' ? 'trap' : (card.type === 'spell' ? 'spell' : 'default')">
                             <div class="flex items-center justify-between text-[11px] font-black mb-2 px-1">
                                 <span class="tracking-wide" x-text="card.name"></span>
                                 <span class="text-yellow-300" x-text="card.price + ' pts'"></span>
@@ -370,7 +378,11 @@
                             </div>
                             <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
                                  x-text="card.type === 'trap' ? '[ Trap Card ]' : '[ Spell Card ]'"></div>
-                            <p class="text-[10px] text-slate-200 leading-tight mb-2 px-1 line-clamp-3" x-text="card.description"></p>
+                            
+                            <div class="nb-card-desc-box">
+                                <p class="text-[10px] text-slate-200 leading-tight" x-text="card.description"></p>
+                            </div>
+
                             <div class="mt-auto flex gap-1.5 p-1">
                                 <button @click="detailCard = card" class="flex-1 py-1.5 rounded bg-black/40 hover:bg-black/60 text-[10px] font-bold transition">LOOK</button>
                                 <button @click="buyCard(card.id)"
@@ -404,7 +416,7 @@
                         </div>
                     </template>
                     <template x-for="(cid, index) in myInventory" :key="'mine-' + index">
-                        <div class="nb-card-shell text-slate-100 flex flex-col" 
+                        <div class="nb-card-shell text-slate-100" 
                              :class="((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'trap' : (((cardCatalog.find(c => c.id === cid) || {}).type) === 'spell' ? 'spell' : 'default')">
                             <div class="flex items-center justify-between text-[11px] font-black mb-2 px-1">
                                 <span class="tracking-wide" x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></span>
@@ -414,6 +426,11 @@
                             </div>
                             <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
                                  x-text="'[ ' + ((cardCatalog.find(c => c.id === cid) || {}).type || '???').toUpperCase() + ' CARD ]'"></div>
+                            
+                            <div class="nb-card-desc-box">
+                                <p class="text-[10px] text-slate-200 leading-tight" x-text="(cardCatalog.find(c => c.id === cid) || {}).description"></p>
+                            </div>
+
                             <div class="mt-auto flex gap-1.5 p-1">
                                 <button @click="detailCard = cardCatalog.find(c => c.id === cid)" class="flex-1 py-1.5 rounded bg-black/40 hover:bg-black/60 text-[10px] font-bold transition">DETAIL</button>
                                 <button @click="useCard(cid)"
@@ -664,7 +681,7 @@
                 },
 
                 canUseCard(cardId, ownerPlayerId = null) {
-                    if (this.status !== 'playing') return false;
+                    if (this.status !== 'playing' && this.status !== 'awaiting_trap_confirmation') return false;
                     if (ownerPlayerId !== null && ownerPlayerId !== this.currentPlayerId) return false;
                     const mine = this.me();
                     if (!mine || !(mine.inventory || []).includes(cardId)) return false;
