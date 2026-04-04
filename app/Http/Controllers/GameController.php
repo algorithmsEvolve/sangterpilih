@@ -464,7 +464,7 @@ class GameController extends Controller
             return response()->json(['error' => 'Player tidak ditemukan.'], 404);
         }
 
-        if ($room->status !== 'playing') {
+        if ($room->status !== 'playing' && $room->status !== 'awaiting_trap_confirmation') {
             return response()->json(['error' => 'Kartu cuma bisa dipakai saat game berjalan.'], 400);
         }
 

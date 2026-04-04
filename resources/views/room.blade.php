@@ -385,7 +385,6 @@
                             </div>
 
                             <div class="mt-auto flex gap-1.5 p-1">
-                                <button @click="detailCard = card" class="flex-1 py-1.5 rounded bg-black/40 hover:bg-black/60 text-[10px] font-bold transition">LOOK</button>
                                 <button @click="buyCard(card.id)"
                                         :disabled="isBuyingCard"
                                         class="flex-1 py-1.5 rounded bg-white/10 hover:bg-white/20 text-[10px] font-bold transition border border-white/10 disabled:opacity-50">
@@ -423,7 +422,7 @@
                                 <span class="tracking-wide" x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></span>
                             </div>
                             <div class="nb-card-art">
-                                <img :src="(cardCatalog.find(c => c.id === cid) || {}).image_url" :alt="cid">
+                                <span class="card-image" x-html="(cardCatalog.find(c => c.id === cid) || {}).image_url"></span>
                             </div>
                             <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
                                  x-text="'[ ' + ((cardCatalog.find(c => c.id === cid) || {}).type || '???').toUpperCase() + ' CARD ]'"></div>
@@ -433,7 +432,6 @@
                             </div>
 
                             <div class="mt-auto flex gap-1.5 p-1">
-                                <button @click="detailCard = cardCatalog.find(c => c.id === cid)" class="flex-1 py-1.5 rounded bg-black/40 hover:bg-black/60 text-[10px] font-bold transition">DETAIL</button>
                                 <button @click="useCard(cid)"
                                         :disabled="isUsingCard || !canUseCard(cid)"
                                         class="flex-1 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold transition disabled:opacity-50">
@@ -443,28 +441,6 @@
                         </div>
                     </template>
                 </div>
-            </div>
-        </div>
-
-        <!-- Card Detail Modal -->
-        <div x-show="detailCard" x-cloak @click.self="detailCard = null"
-             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div class="rounded-2xl w-full max-w-md p-6 border glass-panel"
-                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 :class="detailCard && detailCard.type === 'trap' ? 'border-red-400/40 bg-red-900/20' : 'border-emerald-400/40 bg-emerald-900/20'">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-2xl font-bold" x-text="detailCard?.name"></h3>
-                    <button @click="detailCard = null" class="text-slate-300 hover:text-white">Tutup</button>
-                </div>
-                <p class="text-xs uppercase mb-2" x-text="'Tipe: ' + (detailCard?.type || '-')"></p>
-                <div class="nb-card-art h-40 mb-3">
-                    <img :src="detailCard?.image_url" :alt="detailCard?.name">
-                </div>
-                <p class="text-xs text-slate-300 mb-2" x-text="'Gambar: ' + (detailCard?.image || '-')"></p>
-                <p class="text-sm text-slate-100 leading-relaxed" x-text="detailCard?.description"></p>
             </div>
         </div>
 
@@ -562,10 +538,16 @@
                 isUsingCard: false,
                 showShopModal: false,
                 showInventoryModal: false,
-                detailCard: null,
                 pendingTrapConfirmations: @json($room->pending_trap_confirmations ?? []),
                 trapTargetPlayerId: {{ $room->trap_target_player_id ?? 'null' }},
                 isSkippingTrap: false,
+                effectNotice: {
+                    show: false,
+                    type: 'spell',
+                    cardName: '',
+                    message: '',
+                    timeout: null
+                },
                 toast: {
                     show: false,
                     message: '',
@@ -631,7 +613,8 @@
                         }
                     });
 
-                    this.$nextTick(() => this.maybePromptTrapOnTurnChange());
+
+                    // Trap modal is toggled by reactive status change
                 },
 
                 applyState(state) {
@@ -685,7 +668,7 @@
                     if (this.status !== 'playing' && this.status !== 'awaiting_trap_confirmation') return false;
                     if (ownerPlayerId !== null && ownerPlayerId !== this.currentPlayerId) return false;
                     const mine = this.me();
-                    if (!mine || !(mine.inventory || []).includes(cardId)) return false;
+                    if (!this.myInventory.includes(cardId)) return false;
 
                     if (cardId === 'skip_si') {
                         if (this.currentTurn === this.currentPlayerId && this.status === 'playing') return false;
