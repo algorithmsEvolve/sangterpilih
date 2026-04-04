@@ -145,6 +145,7 @@
             margin-bottom: 8px;
         }
         .nb-effect-burst { animation: nb-burst 0.7s ease-out; }
+        .card-image, .card-image svg { width: 100%; height: 100%; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-6 items-center relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
@@ -374,7 +375,7 @@
                                 <span class="text-yellow-300" x-text="card.price + ' pts'"></span>
                             </div>
                             <div class="nb-card-art">
-                                <span x-html="card.image_url"></span>
+                                <span class="card-image" x-html="card.image_url"></span>
                             </div>
                             <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
                                  x-text="card.type === 'trap' ? '[ Trap Card ]' : '[ Spell Card ]'"></div>
