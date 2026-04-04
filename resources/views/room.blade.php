@@ -374,7 +374,7 @@
                                 <span class="text-yellow-300" x-text="card.price + ' pts'"></span>
                             </div>
                             <div class="nb-card-art">
-                                <img :src="card.image_url" :alt="card.name">
+                                <span x-html="card.image_url"></span>
                             </div>
                             <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
                                  x-text="card.type === 'trap' ? '[ Trap Card ]' : '[ Spell Card ]'"></div>
