@@ -324,7 +324,7 @@
             <div>
                 <h1
                     class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">
-                    Number Battle</h1>
+                    Number Battle @hasSection('mode_name')<span class="text-xl ml-2 text-pink-300">- @yield('mode_name')</span>@endif</h1>
                 <p class="text-slate-400">Room: <span class="text-white font-bold">{{ $room->code }}</span></p>
                 <p class="text-xs text-slate-500 mt-1" x-show="status === 'playing'">Ronde <span
                         class="text-white font-bold" x-text="currentRound"></span> / <span x-text="totalRounds"></span>
@@ -358,7 +358,10 @@
                                 <span x-show="p.is_host"
                                     class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded ml-2">Host</span>
                             </div>
-                            <div class="font-bold text-amber-400" x-text="status !== 'waiting' ? p.score : '-'"></div>
+                            <div class="text-right">
+                                <div class="text-[10px] text-slate-400 font-normal uppercase tracking-wider mb-0.5">@yield('score_label', 'Score')</div>
+                                <div class="font-bold text-amber-400 leading-none" x-text="status !== 'waiting' ? p.score : '-'"></div>
+                            </div>
                         </li>
                     </template>
                 </ul>
@@ -503,7 +506,10 @@
                                             x-text="index === 0 ? '👑' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : ''))"></span>
                                         <span class="text-lg" x-text="bp.name"></span>
                                     </div>
-                                    <span class="font-black text-xl" x-text="bp.score"></span>
+                                    <div class="text-right">
+                                        <div class="text-[10px] text-yellow-500/70 font-normal uppercase tracking-wider mb-0.5">@yield('score_label', 'Score')</div>
+                                        <div class="font-black text-xl leading-none" x-text="bp.score"></div>
+                                    </div>
                                 </li>
                             </template>
                         </ul>
@@ -679,6 +685,74 @@
                 </a>
             </div>
         </div>
+        
+        <!-- Loadout Selection Modal (Survival Mode) -->
+        <div x-show="status === 'selecting_cards'" x-cloak
+            class="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-xl">
+            <div class="w-full max-w-4xl h-full max-h-[90vh] flex flex-col glass-panel rounded-3xl p-6 border border-emerald-500/30 shadow-[0_0_80px_rgba(16,185,129,0.15)] relative">
+                
+                <div class="text-center mb-6">
+                    <h2 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-2">Pilih Loadout Kartu</h2>
+                    <p class="text-slate-300">Waktu tersisa: <span class="font-mono text-2xl font-bold text-yellow-400" x-text="loadoutTimeLeft"></span> detik</p>
+                    <p class="text-sm text-slate-400 mt-1">Pilih maksimal <span class="text-emerald-300 font-bold">2 Spell</span> dan <span class="text-red-300 font-bold">1 Trap</span> untuk bertahan hidup.</p>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pr-2 grid md:grid-cols-2 gap-6">
+                    <!-- Spells -->
+                    <div>
+                        <h3 class="text-xl font-bold text-emerald-400 mb-4 sticky top-0 bg-slate-900/80 backdrop-blur py-2 z-10 border-b border-emerald-500/20">Spells (Pilih <span x-text="selectedSpells.length"></span>/2)</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <template x-for="card in cardCatalog.filter(c => c.type === 'spell')" :key="card.id">
+                                <div @click="toggleLoadoutCard(card)" 
+                                     class="nb-card-shell cursor-pointer transition-all duration-200"
+                                     :class="[
+                                        'spell',
+                                        selectedSpells.includes(card.id) ? 'ring-4 ring-emerald-400 transform scale-[1.02] bg-emerald-900/50' : 'hover:border-emerald-400/50',
+                                        (selectedSpells.length >= 2 && !selectedSpells.includes(card.id)) ? 'opacity-50 grayscale' : ''
+                                     ]">
+                                    <div class="flex items-center justify-between text-[10px] font-black mb-1 px-1 text-slate-100">
+                                        <span x-text="card.name"></span>
+                                        <span x-show="selectedSpells.includes(card.id)" class="text-emerald-400 text-lg">✓</span>
+                                    </div>
+                                    <div class="nb-card-art h-[60px]"><span class="card-image" x-html="card.image_url"></span></div>
+                                    <div class="nb-card-desc-box mt-1"><p class="text-[9px] text-slate-200 leading-tight" x-text="card.description"></p></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Traps -->
+                    <div>
+                        <h3 class="text-xl font-bold text-red-400 mb-4 sticky top-0 bg-slate-900/80 backdrop-blur py-2 z-10 border-b border-red-500/20">Traps (Pilih <span x-text="selectedTraps.length"></span>/1)</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <template x-for="card in cardCatalog.filter(c => c.type === 'trap')" :key="card.id">
+                                <div @click="toggleLoadoutCard(card)" 
+                                     class="nb-card-shell cursor-pointer transition-all duration-200"
+                                     :class="[
+                                        'trap',
+                                        selectedTraps.includes(card.id) ? 'ring-4 ring-red-400 transform scale-[1.02] bg-red-900/50' : 'hover:border-red-400/50',
+                                        (selectedTraps.length >= 1 && !selectedTraps.includes(card.id)) ? 'opacity-50 grayscale' : ''
+                                     ]">
+                                    <div class="flex items-center justify-between text-[10px] font-black mb-1 px-1 text-slate-100">
+                                        <span x-text="card.name"></span>
+                                        <span x-show="selectedTraps.includes(card.id)" class="text-red-400 text-lg">✓</span>
+                                    </div>
+                                    <div class="nb-card-art h-[60px]"><span class="card-image" x-html="card.image_url"></span></div>
+                                    <div class="nb-card-desc-box mt-1"><p class="text-[9px] text-slate-200 leading-tight" x-text="card.description"></p></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 text-center border-t border-white/10 pt-4">
+                    <button @click="submitLoadout" :disabled="hasSelectedCards || isSubmittingLoadout"
+                        class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-12 py-4 rounded-xl font-bold text-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-text="hasSelectedCards ? 'Menunggu Pemain Lain...' : (isSubmittingLoadout ? 'Menyimpan...' : 'KUNCI LOADOUT')"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -728,6 +802,13 @@
                 // Versi Upstash Redis Baru:
                 trapTargetPlayerId: @json($room->trap_target_player_id ?? null),
                 isSkippingTrap: false,
+                isSubmittingLoadout: false,
+                selectionEndTime: null,
+                loadoutTimeLeft: 10,
+                selectedSpells: [],
+                selectedTraps: [],
+                hasSelectedCards: false,
+                loadoutTimer: null,
                 effectNotice: {
                     show: false,
                     type: 'spell',
@@ -817,8 +898,19 @@
                     this.trapTargetPlayerId = state.trapTargetPlayerId;
                     this.players = state.players ?? this.players;
                     this.lastRollerName = state.lastRollerName || '';
+                    this.selectionEndTime = state.selectionEndTime ?? this.selectionEndTime;
+                    
+                    const me = this.me();
+                    if (me) {
+                        this.hasSelectedCards = me.has_selected_cards;
+                    }
+
                     if (!this.isAnimating) {
                         this.recentDice = state.lastDiceResult || 0;
+                    }
+
+                    if (this.status === 'selecting_cards' && this.selectionEndTime) {
+                        this.startLoadoutTimer();
                     }
                 },
 
@@ -1034,6 +1126,61 @@
                             this.players[pIndex].score = newScore;
                         }
                     }, 1200);
+                },
+
+                startLoadoutTimer() {
+                    if (this.loadoutTimer) clearInterval(this.loadoutTimer);
+                    this.loadoutTimeLeft = 10;
+                    this.loadoutTimer = setInterval(() => {
+                        this.updateLoadoutTime();
+                    }, 1000);
+                },
+
+                updateLoadoutTime() {
+                    if (this.status !== 'selecting_cards') {
+                        if (this.loadoutTimer) clearInterval(this.loadoutTimer);
+                        return;
+                    }
+                    this.loadoutTimeLeft = Math.max(0, this.loadoutTimeLeft - 1);
+                    
+                    if (this.loadoutTimeLeft === 0 && !this.hasSelectedCards) {
+                        if (this.loadoutTimer) clearInterval(this.loadoutTimer);
+                        this.submitLoadout();
+                    }
+                },
+
+                toggleLoadoutCard(card) {
+                    if (this.hasSelectedCards) return;
+                    if (card.type === 'spell') {
+                        if (this.selectedSpells.includes(card.id)) {
+                            this.selectedSpells = this.selectedSpells.filter(id => id !== card.id);
+                        } else if (this.selectedSpells.length < 2) {
+                            this.selectedSpells = [...this.selectedSpells, card.id];
+                        }
+                    } else if (card.type === 'trap') {
+                        if (this.selectedTraps.includes(card.id)) {
+                            this.selectedTraps = this.selectedTraps.filter(id => id !== card.id);
+                        } else if (this.selectedTraps.length < 1) {
+                            this.selectedTraps = [...this.selectedTraps, card.id];
+                        }
+                    }
+                },
+
+                async submitLoadout() {
+                    if (this.hasSelectedCards || this.isSubmittingLoadout) return;
+                    this.isSubmittingLoadout = true;
+                    try {
+                        await this.postJson('/room/' + this.roomCode + '/submit-loadout', {
+                            spells: this.selectedSpells,
+                            traps: this.selectedTraps
+                        });
+                        this.hasSelectedCards = true;
+                        this.notify('Loadout terkunci. Tunggu pemain lain.');
+                    } catch (error) {
+                        this.notify(error.message || 'Gagal menyimpan loadout.', 'error');
+                    } finally {
+                        this.isSubmittingLoadout = false;
+                    }
                 }
             };
         }

@@ -30,4 +30,5 @@ Route::post('/room/{code}/end-turn', [GameRedisController::class, 'endTurn']);
 Route::post('/room/{code}/shop/buy', [GameRedisController::class, 'buyCard']);
 Route::post('/room/{code}/cards/use', [GameRedisController::class, 'useCard']);
 Route::post('/room/{code}/cards/skip-trap', [GameRedisController::class, 'skipTrap']);
+Route::post('/room/{code}/submit-loadout', [GameRedisController::class, 'submitLoadout']);
 Route::post('/room/{code}/leave', [GameRedisController::class, 'leaveRoom']);

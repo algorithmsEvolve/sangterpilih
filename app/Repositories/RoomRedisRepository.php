@@ -36,10 +36,11 @@ class RoomRedisRepository
     /**
      * Helper: Format awal struktur Room baru.
      */
-    public static function buildInitialRoom(string $code, string $hostId, string $hostName): array
+    public static function buildInitialRoom(string $code, string $hostId, string $hostName, string $mode = 'classic'): array
     {
         return [
             'code' => $code,
+            'mode' => $mode,
             'status' => 'waiting',
             'current_turn_player_id' => $hostId,
             'current_round' => 1,

@@ -1,0 +1,249 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Game Cards Configuration (Survival Mode Focus)
+    |--------------------------------------------------------------------------
+    |
+    | Here we define all the available cards in the game. The cards are divided
+    | into two main types: 'spells' (used before rolling dice) and 'traps'
+    | (used after rolling dice).
+    |
+    | Logic for these cards will be implemented via Command Pattern classes
+    | mapping to the 'effect_class' key.
+    |
+    */
+
+    'spells' => [
+        'heal_potion' => [
+            'id' => 'heal_potion',
+            'name' => 'Heal Potion',
+            'description' => 'Memulihkan 500 LP secara instan.',
+            'type' => 'spell',
+            'icon' => '❤️', // Or tailwind/lucide icon class like 'lucide-heart'
+            'color' => 'bg-green-500',
+            'effect_class' => \App\Services\Cards\Spells\HealPotionEffect::class,
+        ],
+        'feather_fall' => [
+            'id' => 'feather_fall',
+            'name' => 'Feather Fall',
+            'description' => 'Apapun hasil lemparan dadu Anda nanti, maksimal damage yang diterima hanya 100 LP.',
+            'type' => 'spell',
+            'icon' => '🪶',
+            'color' => 'bg-green-400',
+            'effect_class' => \App\Services\Cards\Spells\FeatherFallEffect::class,
+        ],
+        'shield_of_grace' => [
+            'id' => 'shield_of_grace',
+            'name' => 'Shield of Grace',
+            'description' => 'Mengurangi total damage dari lemparan dadu giliran ini sebesar 50%.',
+            'type' => 'spell',
+            'icon' => '🛡️',
+            'color' => 'bg-emerald-500',
+            'effect_class' => \App\Services\Cards\Spells\ShieldOfGraceEffect::class,
+        ],
+        'loaded_dice_low' => [
+            'id' => 'loaded_dice_low',
+            'name' => 'Loaded Dice (Low)',
+            'description' => 'Memanipulasi dadu Anda. Hasil lemparan giliran ini dipastikan bernilai 1 atau 2.',
+            'type' => 'spell',
+            'icon' => '🎲',
+            'color' => 'bg-green-600',
+            'effect_class' => \App\Services\Cards\Spells\LoadedDiceLowEffect::class,
+        ],
+        'vampiric_aura' => [
+            'id' => 'vampiric_aura',
+            'name' => 'Vampiric Aura',
+            'description' => 'Alih-alih menerima damage, lemparan dadu giliran ini akan memulihkan LP Anda sebesar (Angka Dadu x 100).',
+            'type' => 'spell',
+            'icon' => '🦇',
+            'color' => 'bg-red-500',
+            'effect_class' => \App\Services\Cards\Spells\VampiricAuraEffect::class,
+        ],
+        'time_skip' => [
+            'id' => 'time_skip',
+            'name' => 'Time Skip',
+            'description' => 'Melewatkan fase lempar dadu Anda (0 damage), namun giliran Anda langsung berakhir.',
+            'type' => 'spell',
+            'icon' => '⏳',
+            'color' => 'bg-blue-400',
+            'effect_class' => \App\Services\Cards\Spells\TimeSkipEffect::class,
+        ],
+        'gamblers_shield' => [
+            'id' => 'gamblers_shield',
+            'name' => 'Gambler\'s Shield',
+            'description' => 'Tebak Ganjil/Genap. Jika benar: 0 damage. Jika salah: 2x damage.',
+            'type' => 'spell',
+            'icon' => '⚖️',
+            'color' => 'bg-yellow-500',
+            'effect_class' => \App\Services\Cards\Spells\GamblersShieldEffect::class,
+        ],
+        'rewind' => [
+            'id' => 'rewind',
+            'name' => 'Rewind',
+            'description' => 'Melempar dadu 2 kali secara sistem, dan otomatis hasil terkecil yang diaplikasikan.',
+            'type' => 'spell',
+            'icon' => '⏪',
+            'color' => 'bg-indigo-500',
+            'effect_class' => \App\Services\Cards\Spells\RewindEffect::class,
+        ],
+        'blood_sacrifice' => [
+            'id' => 'blood_sacrifice',
+            'name' => 'Blood Sacrifice',
+            'description' => 'Korbankan 300 LP milik Anda untuk mencuri 1 kartu acak dari lawan.',
+            'type' => 'spell',
+            'icon' => '🩸',
+            'color' => 'bg-red-700',
+            'effect_class' => \App\Services\Cards\Spells\BloodSacrificeEffect::class,
+        ],
+        'amnesty' => [
+            'id' => 'amnesty',
+            'name' => 'Amnesty',
+            'description' => 'Jika LP di bawah 1000, berapapun hasil dadu Anda = 0 damage.',
+            'type' => 'spell',
+            'icon' => '🕊️',
+            'color' => 'bg-white',
+            'effect_class' => \App\Services\Cards\Spells\AmnestyEffect::class,
+        ],
+        'reflect_stance' => [
+            'id' => 'reflect_stance',
+            'name' => 'Reflect Stance',
+            'description' => 'Jika lemparan dadu bernilai 5/6, damage disebar merata ke seluruh lawan, Anda terima 0.',
+            'type' => 'spell',
+            'icon' => '🪞',
+            'color' => 'bg-purple-400',
+            'effect_class' => \App\Services\Cards\Spells\ReflectStanceEffect::class,
+        ],
+        'guardian_angel' => [
+            'id' => 'guardian_angel',
+            'name' => 'Guardian Angel',
+            'description' => 'Kebal dari serangan Trap lawan hingga giliran Anda berikutnya.',
+            'type' => 'spell',
+            'icon' => '👼',
+            'color' => 'bg-yellow-300',
+            'effect_class' => \App\Services\Cards\Spells\GuardianAngelEffect::class,
+        ],
+        'equalizer' => [
+            'id' => 'equalizer',
+            'name' => 'Equalizer',
+            'description' => 'Menyamakan LP Anda dengan pemain LP terendah, lalu ditambah 300 LP.',
+            'type' => 'spell',
+            'icon' => '🟰',
+            'color' => 'bg-gray-500',
+            'effect_class' => \App\Services\Cards\Spells\EqualizerEffect::class,
+        ],
+        'last_stand' => [
+            'id' => 'last_stand',
+            'name' => 'Last Stand',
+            'description' => 'Jika lemparan dadu ini membuat LP habis, LP tersisa 1.',
+            'type' => 'spell',
+            'icon' => '🔥',
+            'color' => 'bg-orange-500',
+            'effect_class' => \App\Services\Cards\Spells\LastStandEffect::class,
+        ],
+        'adrenaline_rush' => [
+            'id' => 'adrenaline_rush',
+            'name' => 'Adrenaline Rush',
+            'description' => 'Terima damage dadu normal, tapi di giliran berikutnya pulih sebesar 2x damage tersebut.',
+            'type' => 'spell',
+            'icon' => '⚡',
+            'color' => 'bg-yellow-400',
+            'effect_class' => \App\Services\Cards\Spells\AdrenalineRushEffect::class,
+        ],
+    ],
+
+    'traps' => [
+        'curse_heavy_bones' => [
+            'id' => 'curse_heavy_bones',
+            'name' => 'Curse of Heavy Bones',
+            'description' => 'Target lawan menerima damage 2x lipat dari dadu mereka giliran berikutnya.',
+            'type' => 'trap',
+            'icon' => '☠️',
+            'color' => 'bg-gray-800',
+            'effect_class' => \App\Services\Cards\Traps\CurseHeavyBonesEffect::class,
+        ],
+        'blood_siphon' => [
+            'id' => 'blood_siphon',
+            'name' => 'Blood Siphon',
+            'description' => 'Curi 300 LP dari satu target pemain.',
+            'type' => 'trap',
+            'icon' => '🧛',
+            'color' => 'bg-red-600',
+            'effect_class' => \App\Services\Cards\Traps\BloodSiphonEffect::class,
+        ],
+        'forced_reroll' => [
+            'id' => 'forced_reroll',
+            'name' => 'Forced Reroll',
+            'description' => 'Target dipaksa melempar 2 dadu pada gilirannya dan menanggung total damage-nya.',
+            'type' => 'trap',
+            'icon' => '🔄',
+            'color' => 'bg-red-500',
+            'effect_class' => \App\Services\Cards\Traps\ForcedRerollEffect::class,
+        ],
+        'poison_dart' => [
+            'id' => 'poison_dart',
+            'name' => 'Poison Dart',
+            'description' => 'Target langsung menerima damage instan 200 LP.',
+            'type' => 'trap',
+            'icon' => '🎯',
+            'color' => 'bg-green-700',
+            'effect_class' => \App\Services\Cards\Traps\PoisonDartEffect::class,
+        ],
+        'karma' => [
+            'id' => 'karma',
+            'name' => 'Karma',
+            'description' => 'Pantulkan damage lebih dari 400 yang Anda terima giliran ini ke satu lawan.',
+            'type' => 'trap',
+            'icon' => '☯️',
+            'color' => 'bg-purple-600',
+            'effect_class' => \App\Services\Cards\Traps\KarmaEffect::class,
+        ],
+        'reverse_fortune' => [
+            'id' => 'reverse_fortune',
+            'name' => 'Reverse Fortune',
+            'description' => 'Membalikkan nilai dadu target di giliran mereka berikutnya (1 jadi 6, dst).',
+            'type' => 'trap',
+            'icon' => '🃏',
+            'color' => 'bg-indigo-600',
+            'effect_class' => \App\Services\Cards\Traps\ReverseFortuneEffect::class,
+        ],
+        'sabotage' => [
+            'id' => 'sabotage',
+            'name' => 'Sabotage / Silence',
+            'description' => 'Mengunci target agar tidak bisa menggunakan Spell pada giliran mereka berikutnya.',
+            'type' => 'trap',
+            'icon' => '🔇',
+            'color' => 'bg-gray-600',
+            'effect_class' => \App\Services\Cards\Traps\SabotageEffect::class,
+        ],
+        'russian_roulette' => [
+            'id' => 'russian_roulette',
+            'name' => 'Russian Roulette',
+            'description' => 'Semua pemain di room menerima 300 damage secara instan.',
+            'type' => 'trap',
+            'icon' => '🔫',
+            'color' => 'bg-red-800',
+            'effect_class' => \App\Services\Cards\Traps\RussianRouletteEffect::class,
+        ],
+        'time_bomb' => [
+            'id' => 'time_bomb',
+            'name' => 'Time Bomb',
+            'description' => 'Pasang bom ke target. Setelah 2 putaran target menerima ledakan 800 damage.',
+            'type' => 'trap',
+            'icon' => '💣',
+            'color' => 'bg-orange-600',
+            'effect_class' => \App\Services\Cards\Traps\TimeBombEffect::class,
+        ],
+        'blindfold' => [
+            'id' => 'blindfold',
+            'name' => 'Blindfold',
+            'description' => 'Menyembunyikan UI target, dan hasil dadu target berikutnya otomatis +1.',
+            'type' => 'trap',
+            'icon' => '👁️‍🗨️',
+            'color' => 'bg-black',
+            'effect_class' => \App\Services\Cards\Traps\BlindfoldEffect::class,
+        ],
+    ]
+];

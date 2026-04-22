@@ -96,6 +96,13 @@
             <form action="/room/create" method="POST" class="space-y-4" @submit="formLoading = 'create'">
                 @csrf
                 <div>
+                    <label class="block text-sm text-slate-400 mb-1">Game Mode</label>
+                    <select name="mode" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none">
+                        <option value="classic">Classic (Point Race)</option>
+                        <option value="survival">Survival (Sudden Death)</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-sm text-slate-400 mb-1">Your Name</label>
                     <input type="text" name="host_name" required class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="e.g. Master">
                 </div>
