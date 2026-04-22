@@ -10,9 +10,9 @@ interface GameModeInterface
     public function getInitialScore(int $totalPlayers): int;
 
     /**
-     * Processes how a dice roll affects the game state.
+     * Processes how a dice roll affects the game state. Returns the final dice result (which might be modified by effects).
      */
-    public function processDiceRoll(array &$room, string $playerId, int $diceResult): void;
+    public function processDiceRoll(array &$room, string $playerId, int $diceResult): int;
 
     /**
      * Checks if the game has reached an ending condition.

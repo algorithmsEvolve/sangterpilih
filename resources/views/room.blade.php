@@ -393,6 +393,56 @@
                 <div x-show="status === 'playing'"
                     class="w-full flex flex-col items-center justify-center text-center relative">
 
+                    <!-- Gambler's Shield Modal -->
+        <div x-show="showGamblerModal" x-cloak
+            class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+            <div @click.outside="showGamblerModal = false" class="glass-panel p-8 rounded-3xl max-w-sm w-full border border-yellow-500/30 text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent"></div>
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-black text-yellow-400 mb-2 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">Tebak Dadu!</h2>
+                    <p class="text-slate-300 mb-6 text-sm">Pilih Ganjil atau Genap. Benar = 0 Damage. Salah = 2x Damage!</p>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button @click="executeUseCard(activeCardIdToUse, { guess: 'odd' })" :disabled="isUsingCard"
+                            class="bg-indigo-600/50 hover:bg-indigo-500 border border-indigo-400 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.6)]">
+                            GANJIL (1, 3, 5)
+                        </button>
+                        <button @click="executeUseCard(activeCardIdToUse, { guess: 'even' })" :disabled="isUsingCard"
+                            class="bg-rose-600/50 hover:bg-rose-500 border border-rose-400 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(225,29,72,0.3)] hover:shadow-[0_0_25px_rgba(225,29,72,0.6)]">
+                            GENAP (2, 4, 6)
+                        </button>
+                    </div>
+                    <button @click="showGamblerModal = false" class="mt-4 text-slate-400 hover:text-white text-sm transition-colors">Batal Pakai</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Player Modal (Blood Sacrifice) -->
+        <div x-show="showTargetModal" x-cloak
+            class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+            <div @click.outside="showTargetModal = false" class="glass-panel p-8 rounded-3xl max-w-sm w-full border border-red-500/30 text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent"></div>
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-black text-red-400 mb-2 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]">Pilih Korban</h2>
+                    <p class="text-slate-300 mb-6 text-sm">Siapa yang mau kamu jadikan target?</p>
+                    
+                    <div class="flex flex-col gap-3 max-h-[40vh] overflow-y-auto pr-2">
+                        <template x-for="p in players.filter(pl => pl.id !== currentPlayerId)" :key="p.id">
+                            <button @click="executeUseCard(activeCardIdToUse, { target_player_id: p.id })" :disabled="isUsingCard"
+                                class="bg-slate-800/80 hover:bg-red-900/50 border border-slate-600 hover:border-red-500 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-between">
+                                <span x-text="p.name"></span>
+                                <span class="text-xs text-slate-400">Pilih Target</span>
+                            </button>
+                        </template>
+                        <div x-show="players.filter(pl => pl.id !== currentPlayerId).length === 0" class="text-slate-500 text-sm py-4">
+                            Gak ada pemain lain buat dijadiin korban.
+                        </div>
+                    </div>
+                    <button @click="showTargetModal = false" class="mt-6 text-slate-400 hover:text-white text-sm transition-colors">Batal Pakai</button>
+                </div>
+            </div>
+        </div>
+
                     <!-- Compact roll request feedback (DB round-trip) -->
                     <div x-show="isRolling" x-transition
                         class="absolute top-0 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-full bg-slate-900/90 border border-pink-500/30 text-pink-200 text-sm font-medium shadow-lg backdrop-blur-sm flex items-center gap-2">
@@ -541,30 +591,20 @@
                 </div>
                 <p class="text-sm text-slate-400 mb-4">Belanja pake poin lo. Mau nekat, mau licik, terserah tongkrongan
                     lo.</p>
-                <div class="grid sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto pr-1 justify-center place-content-center mx-auto">
                     <template x-for="card in cardCatalog" :key="card.id">
-                        <div class="nb-card-shell text-slate-100"
-                            :class="card.type === 'trap' ? 'trap' : (card.type === 'spell' ? 'spell' : 'default')">
-                            <div class="flex items-center justify-between text-[11px] font-black mb-2 px-1">
-                                <span class="tracking-wide" x-text="card.name"></span>
-                                <span class="text-yellow-300" x-text="card.price + ' pts'"></span>
+                        <div @click="!isBuyingCard ? buyCard(card.id) : null"
+                             class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[140px] p-2.5 relative group mx-auto w-full max-w-[140px]"
+                             :class="card.type === 'trap' ? 'trap' : 'spell'">
+                            <div class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-lg">
+                                <span class="text-yellow-400 font-bold text-sm mb-1" x-text="card.price + ' pts'"></span>
+                                <span class="bg-indigo-600 text-white text-xs px-2.5 py-1 rounded">CLICK TO BUY</span>
                             </div>
-                            <div class="nb-card-art">
-                                <span class="card-image" x-html="card.image_url"></span>
+                            <div class="flex items-center justify-between text-xs font-black mb-2 text-slate-100">
+                                <span x-text="card.name" class="truncate max-w-[100%]"></span>
                             </div>
-                            <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
-                                x-text="card.type === 'trap' ? '[ Trap Card ]' : '[ Spell Card ]'"></div>
-
-                            <div class="nb-card-desc-box">
-                                <p class="text-[10px] text-slate-200 leading-tight" x-text="card.description"></p>
-                            </div>
-
-                            <div class="mt-auto flex gap-1.5 p-1">
-                                <button @click="buyCard(card.id)" :disabled="isBuyingCard"
-                                    class="flex-1 py-1.5 rounded bg-white/10 hover:bg-white/20 text-[10px] font-bold transition border border-white/10 disabled:opacity-50">
-                                    <span x-text="isBuyingCard ? '...' : 'BUY'"></span>
-                                </button>
-                            </div>
+                            <div class="nb-card-art h-[50px] mb-2"><span class="card-image" x-html="card.image_url"></span></div>
+                            <div class="nb-card-desc-box mt-0 p-1.5 h-[65px] overflow-hidden flex items-center justify-center text-center"><p class="text-[9px] text-slate-200 leading-tight" x-text="card.description"></p></div>
                         </div>
                     </template>
                 </div>
@@ -585,39 +625,28 @@
                     <h3 class="text-2xl font-bold text-slate-100">Inventory Lo Doang</h3>
                     <button @click="showInventoryModal = false" class="text-slate-300 hover:text-white">Tutup</button>
                 </div>
-                <div class="grid sm:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-1">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto pr-1 justify-center place-content-center mx-auto">
                     <template x-if="myInventory.length === 0">
-                        <div
-                            class="col-span-2 rounded-xl border border-white/10 bg-slate-900/60 p-6 text-center text-slate-400">
+                        <div class="col-span-2 sm:col-span-3 md:col-span-4 rounded-xl border border-white/10 bg-slate-900/60 p-6 text-center text-slate-400 w-full">
                             Inventory lo kosong. Nabung poin dulu, beli kartu, baru rusuh.
                         </div>
                     </template>
                     <template x-for="(cid, index) in myInventory" :key="'mine-' + index">
-                        <div class="nb-card-shell text-slate-100"
-                            :class="((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'trap' : (((cardCatalog.find(c => c.id === cid) || {}).type) === 'spell' ? 'spell' : 'default')">
-                            <div class="flex items-center justify-between text-[11px] font-black mb-2 px-1">
-                                <span class="tracking-wide"
-                                    x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></span>
+                        <div @click="(!isUsingCard && canUseCard(cid)) ? useCard(cid) : null"
+                             class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[140px] p-2.5 relative group mx-auto w-full max-w-[140px]"
+                             :class="[
+                                ((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'trap' : 'spell',
+                                (!isUsingCard && canUseCard(cid)) ? 'hover:scale-105' : 'opacity-50 grayscale cursor-not-allowed'
+                             ]">
+                            <div class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-lg"
+                                 x-show="(!isUsingCard && canUseCard(cid))">
+                                <span class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded font-bold">USE CARD</span>
                             </div>
-                            <div class="nb-card-art">
-                                <span class="card-image"
-                                    x-html="(cardCatalog.find(c => c.id === cid) || {}).image_url"></span>
+                            <div class="flex items-center justify-between text-xs font-black mb-2 text-slate-100">
+                                <span x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid" class="truncate max-w-[100%]"></span>
                             </div>
-                            <div class="text-[9px] uppercase tracking-widest font-bold opacity-70 mb-1 px-1"
-                                x-text="'[ ' + ((cardCatalog.find(c => c.id === cid) || {}).type || '???').toUpperCase() + ' CARD ]'">
-                            </div>
-
-                            <div class="nb-card-desc-box">
-                                <p class="text-[10px] text-slate-200 leading-tight"
-                                    x-text="(cardCatalog.find(c => c.id === cid) || {}).description"></p>
-                            </div>
-
-                            <div class="mt-auto flex gap-1.5 p-1">
-                                <button @click="useCard(cid)" :disabled="isUsingCard || !canUseCard(cid)"
-                                    class="flex-1 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold transition disabled:opacity-50">
-                                    <span x-text="isUsingCard ? '...' : 'USE'"></span>
-                                </button>
-                            </div>
+                            <div class="nb-card-art h-[50px] mb-2"><span class="card-image" x-html="(cardCatalog.find(c => c.id === cid) || {}).image_url"></span></div>
+                            <div class="nb-card-desc-box mt-0 p-1.5 h-[65px] overflow-hidden flex items-center justify-center text-center"><p class="text-[9px] text-slate-200 leading-tight" x-text="(cardCatalog.find(c => c.id === cid) || {}).description"></p></div>
                         </div>
                     </template>
                 </div>
@@ -697,25 +726,25 @@
                     <p class="text-sm text-slate-400 mt-1">Pilih maksimal <span class="text-emerald-300 font-bold">2 Spell</span> dan <span class="text-red-300 font-bold">1 Trap</span> untuk bertahan hidup.</p>
                 </div>
 
-                <div class="flex-1 overflow-y-auto pr-2 grid md:grid-cols-2 gap-6">
+                <div class="flex-1 overflow-y-auto pr-2 flex flex-col gap-4">
                     <!-- Spells -->
                     <div>
-                        <h3 class="text-xl font-bold text-emerald-400 mb-4 sticky top-0 bg-slate-900/80 backdrop-blur py-2 z-10 border-b border-emerald-500/20">Spells (Pilih <span x-text="selectedSpells.length"></span>/2)</h3>
-                        <div class="grid grid-cols-2 gap-3">
+                        <h3 class="text-lg font-bold text-emerald-400 mb-2 sticky top-0 bg-slate-900/80 backdrop-blur py-1 z-10 border-b border-emerald-500/20">Spells (Pilih <span x-text="selectedSpells.length"></span>/2)</h3>
+                        <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
                             <template x-for="card in cardCatalog.filter(c => c.type === 'spell')" :key="card.id">
                                 <div @click="toggleLoadoutCard(card)" 
-                                     class="nb-card-shell cursor-pointer transition-all duration-200"
+                                     class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
                                      :class="[
                                         'spell',
-                                        selectedSpells.includes(card.id) ? 'ring-4 ring-emerald-400 transform scale-[1.02] bg-emerald-900/50' : 'hover:border-emerald-400/50',
+                                        selectedSpells.includes(card.id) ? 'ring-2 ring-emerald-400 transform scale-[1.05] bg-emerald-900/50' : 'hover:border-emerald-400/50',
                                         (selectedSpells.length >= 2 && !selectedSpells.includes(card.id)) ? 'opacity-50 grayscale' : ''
                                      ]">
-                                    <div class="flex items-center justify-between text-[10px] font-black mb-1 px-1 text-slate-100">
-                                        <span x-text="card.name"></span>
-                                        <span x-show="selectedSpells.includes(card.id)" class="text-emerald-400 text-lg">✓</span>
+                                    <div class="flex items-center justify-between text-[8px] font-black mb-1 text-slate-100">
+                                        <span x-text="card.name" class="truncate max-w-[80%]"></span>
+                                        <span x-show="selectedSpells.includes(card.id)" class="text-emerald-400 text-xs">✓</span>
                                     </div>
-                                    <div class="nb-card-art h-[60px]"><span class="card-image" x-html="card.image_url"></span></div>
-                                    <div class="nb-card-desc-box mt-1"><p class="text-[9px] text-slate-200 leading-tight" x-text="card.description"></p></div>
+                                    <div class="nb-card-art h-[35px] mb-1"><span class="card-image" x-html="card.image_url"></span></div>
+                                    <div class="nb-card-desc-box mt-0 p-1 h-[45px] overflow-hidden"><p class="text-[7px] text-slate-200 leading-tight" x-text="card.description"></p></div>
                                 </div>
                             </template>
                         </div>
@@ -723,22 +752,22 @@
                     
                     <!-- Traps -->
                     <div>
-                        <h3 class="text-xl font-bold text-red-400 mb-4 sticky top-0 bg-slate-900/80 backdrop-blur py-2 z-10 border-b border-red-500/20">Traps (Pilih <span x-text="selectedTraps.length"></span>/1)</h3>
-                        <div class="grid grid-cols-2 gap-3">
+                        <h3 class="text-lg font-bold text-red-400 mb-2 sticky top-0 bg-slate-900/80 backdrop-blur py-1 z-10 border-b border-red-500/20">Traps (Pilih <span x-text="selectedTraps.length"></span>/1)</h3>
+                        <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
                             <template x-for="card in cardCatalog.filter(c => c.type === 'trap')" :key="card.id">
                                 <div @click="toggleLoadoutCard(card)" 
-                                     class="nb-card-shell cursor-pointer transition-all duration-200"
+                                     class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
                                      :class="[
                                         'trap',
-                                        selectedTraps.includes(card.id) ? 'ring-4 ring-red-400 transform scale-[1.02] bg-red-900/50' : 'hover:border-red-400/50',
+                                        selectedTraps.includes(card.id) ? 'ring-2 ring-red-400 transform scale-[1.05] bg-red-900/50' : 'hover:border-red-400/50',
                                         (selectedTraps.length >= 1 && !selectedTraps.includes(card.id)) ? 'opacity-50 grayscale' : ''
                                      ]">
-                                    <div class="flex items-center justify-between text-[10px] font-black mb-1 px-1 text-slate-100">
-                                        <span x-text="card.name"></span>
-                                        <span x-show="selectedTraps.includes(card.id)" class="text-red-400 text-lg">✓</span>
+                                    <div class="flex items-center justify-between text-[8px] font-black mb-1 text-slate-100">
+                                        <span x-text="card.name" class="truncate max-w-[80%]"></span>
+                                        <span x-show="selectedTraps.includes(card.id)" class="text-red-400 text-xs">✓</span>
                                     </div>
-                                    <div class="nb-card-art h-[60px]"><span class="card-image" x-html="card.image_url"></span></div>
-                                    <div class="nb-card-desc-box mt-1"><p class="text-[9px] text-slate-200 leading-tight" x-text="card.description"></p></div>
+                                    <div class="nb-card-art h-[35px] mb-1"><span class="card-image" x-html="card.image_url"></span></div>
+                                    <div class="nb-card-desc-box mt-0 p-1 h-[45px] overflow-hidden"><p class="text-[7px] text-slate-200 leading-tight" x-text="card.description"></p></div>
                                 </div>
                             </template>
                         </div>
@@ -786,6 +815,11 @@
                 leaderboard: [],
                 cardCatalog: @json($cardCatalog ?? []),
                 showKickModal: false,
+                isSkippingTrap: false,
+                playerToKick: null,
+                showGamblerModal: false,
+                showTargetModal: false,
+                activeCardIdToUse: null,
                 loadingStart: false,
                 loadingLeave: false,
                 isRolling: false,
@@ -947,7 +981,6 @@
                 canUseCard(cardId, ownerPlayerId = null) {
                     if (this.status !== 'playing' && this.status !== 'awaiting_trap_confirmation') return false;
                     if (ownerPlayerId !== null && ownerPlayerId !== this.currentPlayerId) return false;
-                    const mine = this.me();
                     if (!this.myInventory.includes(cardId)) return false;
 
                     if (cardId === 'skip_si') {
@@ -959,11 +992,11 @@
                     if (cardId === 'multiplier') {
                         if (this.currentTurn !== this.currentPlayerId) return false;
                         if (this.turnMultiplierPlayerId === this.currentPlayerId) return false;
-                        if (!this.myInventory.includes('multiplier')) return false;
                         return true;
                     }
 
-                    return false;
+                    // For dynamic Survival Mode cards, we let the backend handle specific validations
+                    return true;
                 },
 
                 async postJson(url, body = {}) {
@@ -1048,14 +1081,45 @@
                         this.notify('Timing kartu ini belum cocok, sabar dikit.', 'error');
                         return;
                     }
+
+                    if (cardId === 'gamblers_shield') {
+                        this.activeCardIdToUse = cardId;
+                        this.showGamblerModal = true;
+                        this.showInventoryModal = false;
+                        return;
+                    }
+
+                    const cardData = this.cardCatalog.find(c => c.id === cardId);
+                    
+                    const targetedCards = [
+                        'blood_sacrifice', 'curse_heavy_bones', 'blood_siphon', 
+                        'forced_reroll', 'poison_dart', 'karma', 
+                        'reverse_fortune', 'sabotage', 'time_bomb', 'blindfold'
+                    ];
+
+                    if (targetedCards.includes(cardId)) {
+                        this.activeCardIdToUse = cardId;
+                        this.showTargetModal = true;
+                        this.showInventoryModal = false;
+                        return;
+                    }
+
+                    this.executeUseCard(cardId, {});
+                },
+
+                async executeUseCard(cardId, payload = {}) {
                     this.isUsingCard = true;
+                    this.showGamblerModal = false;
+                    this.showTargetModal = false;
                     try {
-                        await this.postJson('/room/' + this.roomCode + '/cards/use', { card_id: cardId });
+                        const body = { card_id: cardId, ...payload };
+                        await this.postJson('/room/' + this.roomCode + '/cards/use', body);
                         this.notify('Kartu dipakai. Semoga musuh makin kesel.');
                     } catch (error) {
                         this.notify(error.message || 'Gagal pakai kartu.', 'error');
                     } finally {
                         this.isUsingCard = false;
+                        this.activeCardIdToUse = null;
                     }
                 },
 

@@ -471,11 +471,11 @@ class GameRedisController extends Controller
         $room['active_turn_snapshot']['rolled'] = true;
         
         $modeService = $this->getModeService($room['mode'] ?? 'classic');
-        $modeService->processDiceRoll($room, $playerId, $diceResult);
+        $finalDiceResult = $modeService->processDiceRoll($room, $playerId, $diceResult);
 
         $room['players'][$playerId]['has_rolled_this_turn'] = true;
         
-        $room['last_dice_result'] = $diceResult;
+        $room['last_dice_result'] = $finalDiceResult;
         $room['last_roller_name'] = $room['players'][$playerId]['name'];
         
         if ($modeService->checkGameOverCondition($room)) {
@@ -655,92 +655,111 @@ class GameRedisController extends Controller
             return response()->json(['error' => 'Kartu ini gak ada di inventory lo.'], 400);
         }
 
+        $effectClass = $catalog[$cardId]['effect_class'] ?? null;
         $effectPayload = null;
         $playerName = $room['players'][$playerId]['name'];
 
-        if ($cardId === self::CARD_MULTIPLIER) {
-            if ($room['current_turn_player_id'] !== $playerId) {
-                return response()->json(['error' => 'Spell multiplier cuma bisa dipakai saat giliran lo.'], 400);
+        if ($effectClass && class_exists($effectClass)) {
+            $effect = app($effectClass);
+            $result = $effect->apply($room, $playerId, $request->all());
+
+            if (isset($result['error'])) {
+                return response()->json(['error' => $result['error']], 400);
             }
 
-            if ($room['turn_multiplier_player_id'] === $playerId) {
-                return response()->json(['error' => 'Multiplier lo udah aktif di giliran ini.'], 400);
+            $effectPayload = $result['payload'] ?? null;
+            if ($effectPayload) {
+                // Ensure card details are filled if missing
+                $effectPayload['cardId'] = $cardId;
+                $effectPayload['cardName'] = $catalog[$cardId]['name'];
+                $effectPayload['cardType'] = $catalog[$cardId]['type'];
             }
+        } else {
+            // Fallback for hardcoded cards
+            if ($cardId === self::CARD_MULTIPLIER) {
+                if ($room['current_turn_player_id'] !== $playerId) {
+                    return response()->json(['error' => 'Spell multiplier cuma bisa dipakai saat giliran lo.'], 400);
+                }
 
-            if ($room['players'][$playerId]['has_rolled_this_turn']) {
-                $startScore = $room['active_turn_snapshot']['start_score'] ?? $room['players'][$playerId]['score'];
-                $turnGain = max(0, $room['players'][$playerId]['score'] - $startScore);
-                
-                if ($turnGain <= 0) {
-                    return response()->json(['error' => 'Belum ada hasil roll yang bisa digandain.'], 400);
+                if ($room['turn_multiplier_player_id'] === $playerId) {
+                    return response()->json(['error' => 'Multiplier lo udah aktif di giliran ini.'], 400);
                 }
-                
-                $room['players'][$playerId]['score'] = $startScore + ($turnGain * 2);
-                if ($room['last_dice_result']) {
-                    $room['last_dice_result'] *= 2;
+
+                if ($room['players'][$playerId]['has_rolled_this_turn']) {
+                    $startScore = $room['active_turn_snapshot']['start_score'] ?? $room['players'][$playerId]['score'];
+                    $turnGain = max(0, $room['players'][$playerId]['score'] - $startScore);
+                    
+                    if ($turnGain <= 0) {
+                        return response()->json(['error' => 'Belum ada hasil roll yang bisa digandain.'], 400);
+                    }
+                    
+                    $room['players'][$playerId]['score'] = $startScore + ($turnGain * 2);
+                    if ($room['last_dice_result']) {
+                        $room['last_dice_result'] *= 2;
+                    }
+                    $room['turn_multiplier_player_id'] = null;
+                    
+                    $effectPayload = [
+                        'cardId' => $cardId,
+                        'cardName' => $catalog[$cardId]['name'],
+                        'cardType' => $catalog[$cardId]['type'],
+                        'usedByPlayerId' => $playerId,
+                        'usedByPlayerName' => $playerName,
+                        'targetPlayerId' => $playerId,
+                        'targetPlayerName' => $playerName,
+                        'note' => $playerName . ' nge-boost hasil dadu jadi x2.',
+                    ];
+                } else {
+                    $room['turn_multiplier_player_id'] = $playerId;
+                    $effectPayload = [
+                        'cardId' => $cardId,
+                        'cardName' => $catalog[$cardId]['name'],
+                        'cardType' => $catalog[$cardId]['type'],
+                        'usedByPlayerId' => $playerId,
+                        'usedByPlayerName' => $playerName,
+                        'targetPlayerId' => $playerId,
+                        'targetPlayerName' => $playerName,
+                        'note' => $playerName . ' siapin multiplier. Roll berikutnya bakal x2.',
+                    ];
                 }
-                $room['turn_multiplier_player_id'] = null;
+            } elseif ($cardId === self::CARD_SKIP) {
+                if ($room['current_turn_player_id'] === $playerId) {
+                    return response()->json(['error' => 'Trap skip dipakai buat ngerjain orang lain, bukan diri sendiri.'], 400);
+                }
+
+                if ($room['turn_has_skip']) {
+                    return response()->json(['error' => 'Skip udah kepake di giliran ini, gak bisa dobel.'], 400);
+                }
+
+                $targetId = $room['current_turn_player_id'];
+                $targetName = null;
                 
+                if (isset($room['players'][$targetId])) {
+                    $targetName = $room['players'][$targetId]['name'];
+                    $startScore = $room['active_turn_snapshot']['start_score'] ?? null;
+                    
+                    if ($room['active_turn_snapshot']['player_id'] === $targetId && $startScore !== null) {
+                        $room['players'][$targetId]['score'] = $startScore;
+                        $room['players'][$targetId]['has_rolled_this_turn'] = false;
+                        $room['last_dice_result'] = null;
+                        $room['last_roller_name'] = null;
+                    }
+                }
+
+                $room['turn_has_skip'] = true;
                 $effectPayload = [
                     'cardId' => $cardId,
                     'cardName' => $catalog[$cardId]['name'],
                     'cardType' => $catalog[$cardId]['type'],
                     'usedByPlayerId' => $playerId,
                     'usedByPlayerName' => $playerName,
-                    'targetPlayerId' => $playerId,
-                    'targetPlayerName' => $playerName,
-                    'note' => $playerName . ' nge-boost hasil dadu jadi x2.',
+                    'targetPlayerId' => $targetId,
+                    'targetPlayerName' => $targetName,
+                    'note' => $playerName . ' ngeskip giliran ' . ($targetName ?? 'target') . '. Sadis!',
                 ];
             } else {
-                $room['turn_multiplier_player_id'] = $playerId;
-                $effectPayload = [
-                    'cardId' => $cardId,
-                    'cardName' => $catalog[$cardId]['name'],
-                    'cardType' => $catalog[$cardId]['type'],
-                    'usedByPlayerId' => $playerId,
-                    'usedByPlayerName' => $playerName,
-                    'targetPlayerId' => $playerId,
-                    'targetPlayerName' => $playerName,
-                    'note' => $playerName . ' siapin multiplier. Roll berikutnya bakal x2.',
-                ];
+                return response()->json(['error' => 'Efek kartu ini belum siap dipakai!'], 400);
             }
-        }
-
-        if ($cardId === self::CARD_SKIP) {
-            if ($room['current_turn_player_id'] === $playerId) {
-                return response()->json(['error' => 'Trap skip dipakai buat ngerjain orang lain, bukan diri sendiri.'], 400);
-            }
-
-            if ($room['turn_has_skip']) {
-                return response()->json(['error' => 'Skip udah kepake di giliran ini, gak bisa dobel.'], 400);
-            }
-
-            $targetId = $room['current_turn_player_id'];
-            $targetName = null;
-            
-            if (isset($room['players'][$targetId])) {
-                $targetName = $room['players'][$targetId]['name'];
-                $startScore = $room['active_turn_snapshot']['start_score'] ?? null;
-                
-                if ($room['active_turn_snapshot']['player_id'] === $targetId && $startScore !== null) {
-                    $room['players'][$targetId]['score'] = $startScore;
-                    $room['players'][$targetId]['has_rolled_this_turn'] = false;
-                    $room['last_dice_result'] = null;
-                    $room['last_roller_name'] = null;
-                }
-            }
-
-            $room['turn_has_skip'] = true;
-            $effectPayload = [
-                'cardId' => $cardId,
-                'cardName' => $catalog[$cardId]['name'],
-                'cardType' => $catalog[$cardId]['type'],
-                'usedByPlayerId' => $playerId,
-                'usedByPlayerName' => $playerName,
-                'targetPlayerId' => $targetId,
-                'targetPlayerName' => $targetName,
-                'note' => $playerName . ' ngeskip giliran ' . ($targetName ?? 'target') . '. Sadis!',
-            ];
         }
 
         // Remove card from inventory
