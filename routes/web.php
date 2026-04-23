@@ -5,7 +5,9 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\GameRedisController;
 
 Route::get('/', function () {
-    return view('welcome');
+    $spells = config('cards.spells', []);
+    $traps = config('cards.traps', []);
+    return view('welcome', compact('spells', 'traps'));
 });
 
 // === RUTING MYSQL/SUPABASE (DITIDURKAN) ===
