@@ -351,13 +351,20 @@
                     <template x-for="p in players" :key="p.id">
                         <li class="flex justify-between items-center bg-slate-800/50 px-4 py-3 rounded-lg border border-slate-700/50"
                             :class="{'ring-2 ring-violet-500 bg-violet-900/30': status === 'playing' && currentTurn === p.id}">
-                            <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full"
-                                    :class="p.id === currentTurn && status === 'playing' ? 'bg-green-400 animate-pulse' : 'bg-slate-600'"></span>
-                                <span x-text="p.name"
-                                    :class="{'font-bold text-violet-300': p.id == currentPlayerId}"></span>
-                                <span x-show="p.is_host"
-                                    class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded ml-2">Host</span>
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full"
+                                        :class="p.id === currentTurn && status === 'playing' ? 'bg-green-400 animate-pulse' : 'bg-slate-600'"></span>
+                                    <span x-text="p.name"
+                                        :class="{'font-bold text-violet-300': p.id == currentPlayerId}"></span>
+                                    <span x-show="p.is_host"
+                                        class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded ml-2">Host</span>
+                                </div>
+                                <div x-show="p.active_buffs && p.active_buffs.length > 0" class="flex flex-wrap gap-1 ml-5">
+                                    <template x-for="buff in p.active_buffs">
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-300 border border-slate-500/30 font-mono" x-text="buff.split('_').join(' ').split(':').join(' ').toUpperCase()"></span>
+                                    </template>
+                                </div>
                             </div>
                             <div class="text-right">
                                 <div class="text-[10px] text-slate-400 font-normal uppercase tracking-wider mb-0.5">
@@ -472,16 +479,17 @@
                         Mengirim lemparan ke server…
                     </div>
 
-                    <div class="mb-12 mt-4 flex justify-center">
-                        <div class="scene">
-                            <!-- Alpine classes apply the 3D rotation logic -->
-                            <div class="dice" :class="[
-                                isAnimating ? 'rolling' : '', 
-                                recentDice > 0 && !isAnimating ? 'show-' + recentDice : 'show-1'
-                            ]">
-                                <div class="dice-face face-1">
-                                    <div class="dot" style="grid-area: 2/2"></div>
-                                </div>
+                    <div class="mb-12 mt-4 flex justify-center gap-6">
+                        <template x-for="(diceVal, idx) in recentDice" :key="idx">
+                            <div class="scene">
+                                <!-- Alpine classes apply the 3D rotation logic -->
+                                <div class="dice" :class="[
+                                    isAnimating ? 'rolling' : '', 
+                                    diceVal > 0 && !isAnimating ? 'show-' + diceVal : 'show-1'
+                                ]">
+                                    <div class="dice-face face-1">
+                                        <div class="dot" style="grid-area: 2/2"></div>
+                                    </div>
                                 <div class="dice-face face-2">
                                     <div class="dot" style="grid-area: 1/1"></div>
                                     <div class="dot" style="grid-area: 3/3"></div>
@@ -512,8 +520,9 @@
                                     <div class="dot" style="grid-area: 2/3"></div>
                                     <div class="dot" style="grid-area: 3/3"></div>
                                 </div>
+                                </div>
                             </div>
-                        </div>
+                        </template>
                     </div>
 
                     <h2 class="text-3xl font-extrabold mb-2 text-white">
@@ -521,9 +530,9 @@
                         <span x-show="currentTurn !== currentPlayerId">Waiting for <span class="text-violet-400"
                                 x-text="getCurrentPlayerName()"></span>...</span>
                     </h2>
-                    <p class="text-slate-400 mb-8" x-show="recentDice > 0">
+                    <p class="text-slate-400 mb-8" x-show="recentDice.length > 0">
                         <span class="font-bold text-white" x-text="lastRollerName"></span> just rolled a <span
-                            class="font-bold text-yellow-400" x-text="recentDice"></span>!
+                            class="font-bold text-yellow-400" x-text="recentDice.join(' & ')"></span>!
                     </p>
 
                     <div class="flex gap-3 mb-4">
@@ -689,44 +698,6 @@
             </div>
         </div>
 
-        <!-- Trap Confirmation Modal -->
-        <div x-show="status === 'awaiting_trap_confirmation' && pendingTrapConfirmations.includes(currentPlayerId)"
-            x-cloak class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-            <div
-                class="glass-panel rounded-3xl w-full max-w-md p-8 border border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.3)] text-center">
-                <div class="text-5xl mb-4">⚠️</div>
-                <h3 class="text-3xl font-extrabold text-red-400 mb-2">Trap Opportunity!</h3>
-                <p class="text-slate-300 leading-relaxed mb-6">
-                    Giliran <span class="font-bold text-white" x-text="getTrapTargetName()"></span> baru aja kelar.
-                    Lo punya <span class="font-bold text-red-300">Sekip si</span>. Mau nembak trap sekarang atau biarin
-                    dia lanjut?
-                </p>
-                <div class="flex flex-col gap-3">
-                    <button @click="confirmTrapUse" :disabled="isUsingCard"
-                        class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-lg shadow-lg transition disabled:opacity-50">
-                        <span x-text="isUsingCard ? 'Nembak...' : 'PAKAI TRAP SEKARANG!'"></span>
-                    </button>
-                    <button @click="skipTrapPhase" :disabled="isSkippingTrap"
-                        class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition disabled:opacity-50">
-                        <span x-text="isSkippingTrap ? 'Sabar...' : 'Gak Dulu, Biarin'"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Waiting for Others Confirmation -->
-        <div x-show="status === 'awaiting_trap_confirmation' && !pendingTrapConfirmations.includes(currentPlayerId)"
-            x-cloak class="fixed inset-0 z-[125] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-            <div class="glass-panel rounded-2xl p-6 text-center max-w-sm">
-                <div class="nb-spin-ring mx-auto mb-4 border-red-500"></div>
-                <p class="text-sm font-bold text-slate-400">Nungguin orang lain galau mau pake Trap atau nggak...</p>
-                <div class="mt-4 flex justify-center gap-1">
-                    <template x-for="pid in pendingTrapConfirmations" :key="pid">
-                        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                    </template>
-                </div>
-            </div>
-        </div>
 
         <!-- Kick Modal -->
         <div x-show="showKickModal"
@@ -775,7 +746,7 @@
                             class="text-lg font-bold text-emerald-400 mb-2 sticky top-0 bg-slate-900/80 backdrop-blur py-1 z-10 border-b border-emerald-500/20">
                             Spells (Pilih <span x-text="selectedSpells.length"></span>/2)</h3>
                         <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
-                            <template x-for="card in cardCatalog.filter(c => c.type === 'spell')" :key="card.id">
+                            <template x-for="card in cardCatalog.filter(c => c.type === 'spell' && !['multiplier', 'skip_si'].includes(c.id))" :key="card.id">
                                 <div @click="toggleLoadoutCard(card)"
                                     class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
                                     :class="[
@@ -806,7 +777,7 @@
                             class="text-lg font-bold text-red-400 mb-2 sticky top-0 bg-slate-900/80 backdrop-blur py-1 z-10 border-b border-red-500/20">
                             Traps (Pilih <span x-text="selectedTraps.length"></span>/1)</h3>
                         <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
-                            <template x-for="card in cardCatalog.filter(c => c.type === 'trap')" :key="card.id">
+                            <template x-for="card in cardCatalog.filter(c => c.type === 'trap' && !['multiplier', 'skip_si'].includes(c.id))" :key="card.id">
                                 <div @click="toggleLoadoutCard(card)"
                                     class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
                                     :class="[
@@ -869,7 +840,7 @@
                     hasRolledThisTurn: !!p.has_rolled_this_turn,
                 })),
                 myInventory: @json($myInventory ?? []),
-                recentDice: {{ $room->last_dice_result ?? 0 }},
+                recentDice: @json($room->last_dice_result ?? [0]),
                 lastRollerName: @json($room->last_roller_name ?? ''),
                 leaderboard: [],
                 cardCatalog: @json($cardCatalog ?? []),
@@ -944,12 +915,16 @@
                         })
                         .listen('CardEffectUsed', (e) => {
                             const p = e.payload || {};
+                            let msg = p.note || (p.cardType === 'trap' ? 'Seseorang memakai trap!' : 'Seseorang memakai spell!');
+                            
+                            if (p.isRandom) {
+                                msg = '🎲 [Target Acak] ' + msg;
+                            }
+
                             this.showEffectNotice(
                                 p.cardType || 'spell',
                                 p.cardName || 'Kartu',
-                                p.cardType === 'trap'
-                                    ? (p.usedByPlayerName + ' nembak trap ke ' + (p.targetPlayerName || 'target') + '!')
-                                    : (p.usedByPlayerName + ' ngeluarin spell: ' + (p.note || 'efek aktif'))
+                                msg
                             );
                         })
                         .listen('GameOver', (e) => {
@@ -999,7 +974,12 @@
                     }
 
                     if (!this.isAnimating) {
-                        this.recentDice = state.lastDiceResult || 0;
+                        let dr = state.lastDiceResult;
+                        if (dr !== null && dr !== undefined) {
+                            this.recentDice = Array.isArray(dr) ? dr : [dr];
+                        } else {
+                            this.recentDice = [0];
+                        }
                     }
 
                     if (this.status === 'selecting_cards' && this.selectionEndTime) {
@@ -1048,8 +1028,12 @@
                         return true;
                     }
 
+                    // Only allow using cards (spells/traps) during the player's own turn
+                    if (this.status === 'playing' && this.currentTurn !== this.currentPlayerId) {
+                        return false;
+                    }
+
                     if (cardId === 'multiplier') {
-                        if (this.currentTurn !== this.currentPlayerId) return false;
                         if (this.turnMultiplierPlayerId === this.currentPlayerId) return false;
                         return true;
                     }
@@ -1104,7 +1088,11 @@
                 async rollDice() {
                     this.isRolling = true;
                     try {
-                        await this.postJson('/room/' + this.roomCode + '/roll');
+                        const res = await this.postJson('/room/' + this.roomCode + '/roll');
+                        if (res && res.diceResult !== undefined) {
+                            // animateDice is also triggered by Echo, but sometimes we get it directly
+                            // if we don't receive Echo.
+                        }
                     } catch (error) {
                         this.isRolling = false;
                         this.notify(error.message || 'Gagal melempar dadu.', 'error');
@@ -1157,9 +1145,14 @@
                     ];
 
                     if (targetedCards.includes(cardId)) {
-                        this.activeCardIdToUse = cardId;
-                        this.showTargetModal = true;
-                        this.showInventoryModal = false;
+                        const otherPlayers = this.players.filter(p => p.id !== this.currentPlayerId);
+                        if (otherPlayers.length > 0) {
+                            const randomTarget = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
+                            this.showInventoryModal = false;
+                            this.executeUseCard(cardId, { target_player_id: randomTarget.id, is_random: true });
+                        } else {
+                            this.notify('Tidak ada korban untuk ditarget!', 'error');
+                        }
                         return;
                     }
 
@@ -1186,25 +1179,7 @@
                     return this.myInventory.filter((c) => c === cardId).length;
                 },
 
-                confirmTrapUse() {
-                    this.useCard('skip_si');
-                },
 
-                getTrapTargetName() {
-                    const p = this.players.find(p => p.id === this.trapTargetPlayerId);
-                    return p ? p.name : 'Target';
-                },
-
-                async skipTrapPhase() {
-                    this.isSkippingTrap = true;
-                    try {
-                        await this.postJson('/room/' + this.roomCode + '/cards/skip-trap');
-                    } catch (error) {
-                        this.notify(error.message || 'Gagal skip trap.', 'error');
-                    } finally {
-                        this.isSkippingTrap = false;
-                    }
-                },
 
                 showEffectNotice(type, cardName, message) {
                     if (this.effectNotice.timeout) clearTimeout(this.effectNotice.timeout);
@@ -1214,7 +1189,7 @@
                     this.effectNotice.show = true;
                     this.effectNotice.timeout = setTimeout(() => {
                         this.effectNotice.show = false;
-                    }, 2400);
+                    }, 5000);
                 },
 
                 cardTypeClass(type) {
@@ -1231,19 +1206,18 @@
 
                     this.isAnimating = true;
                     this.isRolling = false;
-                    this.recentDice = 0;
+                    this.recentDice = Array.isArray(result) ? result : [result];
 
                     this.$nextTick(() => {
-                        const diceEl = document.querySelector('.dice');
-                        if (diceEl) {
-                            diceEl.style.animation = 'none';
-                            void diceEl.offsetHeight;
-                            diceEl.style.animation = null;
-                        }
+                        const diceEls = document.querySelectorAll('.dice');
+                        diceEls.forEach(el => {
+                            el.style.animation = 'none';
+                            void el.offsetHeight;
+                            el.style.animation = null;
+                        });
                     });
 
                     setTimeout(() => {
-                        this.recentDice = result;
                         this.isAnimating = false;
                         if (pIndex > -1) {
                             this.players[pIndex].score = newScore;
@@ -1253,7 +1227,7 @@
 
                 startLoadoutTimer() {
                     if (this.loadoutTimer) clearInterval(this.loadoutTimer);
-                    this.loadoutTimeLeft = 10;
+                    this.loadoutTimeLeft = 30;
                     this.loadoutTimer = setInterval(() => {
                         this.updateLoadoutTime();
                     }, 1000);

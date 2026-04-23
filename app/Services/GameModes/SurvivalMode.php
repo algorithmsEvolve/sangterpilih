@@ -9,28 +9,79 @@ class SurvivalMode implements GameModeInterface
         return $totalPlayers < 4 ? 2000 : 3000;
     }
 
-    public function processDiceRoll(array &$room, string $playerId, int $diceResult): int
+    public function processDiceRoll(array &$room, string $playerId, int $diceResult): array
     {
         $buffs = $room['players'][$playerId]['active_buffs'] ?? [];
 
-        // 1. Diceroll Modifiers
-        if (in_array('loaded_dice_low', $buffs)) {
-            $diceResult = rand(1, 2);
-        }
-        if (in_array('rewind', $buffs)) {
-            $diceResult = min($diceResult, rand(1, 6));
-        }
-        if (in_array('forced_reroll', $buffs)) {
-            $diceResult += rand(1, 6);
-        }
-        if (in_array('reverse_fortune', $buffs)) {
-            $diceResult = 7 - min(6, $diceResult); // ensures valid dice reverse
-        }
-        if (in_array('blindfold', $buffs)) {
-            $diceResult += 1;
+        $rolls = [$diceResult];
+
+        // 1. Diceroll Modifiers (Hanya untuk klik pertama/lemparan dadu murni)
+        $isSubsequentRoll = isset($room['players'][$playerId]['pending_forced_roll']) || isset($room['players'][$playerId]['pending_rewind_roll']);
+        
+        if (!$isSubsequentRoll) {
+            if (in_array('loaded_dice_low', $buffs)) {
+                $rolls[0] = rand(1, 2);
+            }
+            if (in_array('reverse_fortune', $buffs)) {
+                $rolls[0] = 7 - min(6, $rolls[0]); // ensures valid dice reverse
+            }
+            if (in_array('blindfold', $buffs)) {
+                $rolls[0] += 1;
+            }
         }
 
-        $damage = $diceResult * 100;
+        // 2. Multi-Roll State Machine
+        // Prioritas 1: Trap (Forced Reroll)
+        if (in_array('forced_reroll', $buffs)) {
+            if (!isset($room['players'][$playerId]['pending_forced_roll'])) {
+                // Klik pertama Forced Reroll
+                $room['players'][$playerId]['pending_forced_roll'] = $rolls[0];
+                $room['players'][$playerId]['require_extra_roll'] = true;
+                return $rolls;
+            } else {
+                // Klik kedua Forced Reroll
+                $firstRoll = $room['players'][$playerId]['pending_forced_roll'];
+                unset($room['players'][$playerId]['pending_forced_roll']);
+                unset($room['players'][$playerId]['require_extra_roll']);
+                
+                $buffs = array_diff($buffs, ['forced_reroll']);
+                $room['players'][$playerId]['active_buffs'] = array_values($buffs);
+                
+                $rolls = [$firstRoll, $rolls[0]];
+            }
+        } 
+        // Prioritas 2: Spell (Rewind)
+        elseif (in_array('rewind', $buffs)) {
+            if (!isset($room['players'][$playerId]['pending_rewind_roll'])) {
+                // Klik pertama Rewind
+                $room['players'][$playerId]['pending_rewind_roll'] = $rolls[0];
+                $room['players'][$playerId]['require_extra_roll'] = true;
+                return $rolls;
+            } else {
+                // Klik kedua Rewind
+                $firstRoll = $room['players'][$playerId]['pending_rewind_roll'];
+                unset($room['players'][$playerId]['pending_rewind_roll']);
+                unset($room['players'][$playerId]['require_extra_roll']);
+                
+                $buffs = array_diff($buffs, ['rewind']);
+                $room['players'][$playerId]['active_buffs'] = array_values($buffs);
+                
+                // Rewind takes the minimum of the two rolls
+                $rolls = [min($firstRoll, $rolls[0])];
+            }
+        }
+
+        // Jika kombinasi (Forced Reroll selesai dan menghasilkan array [$first, $second]),
+        // dan ternyata pemain juga punya Rewind yang belum diproses:
+        if (in_array('rewind', $buffs) && count($rolls) > 1) {
+            // Rewind otomatis mengambil yang terkecil dari hasil Forced Reroll
+            $rolls = [min($rolls)];
+            $buffs = array_diff($buffs, ['rewind']);
+            $room['players'][$playerId]['active_buffs'] = array_values($buffs);
+        }
+
+        $totalDice = array_sum($rolls);
+        $damage = $totalDice * 100;
 
         // 2. Damage Modifiers
         if (in_array('time_skip', $buffs)) {
@@ -49,14 +100,14 @@ class SurvivalMode implements GameModeInterface
             $damage *= 2;
         }
         if (in_array('gamblers_shield_odd', $buffs)) {
-            $damage = ($diceResult % 2 !== 0) ? 0 : $damage * 2;
+            $damage = ($totalDice % 2 !== 0) ? 0 : $damage * 2;
         }
         if (in_array('gamblers_shield_even', $buffs)) {
-            $damage = ($diceResult % 2 === 0) ? 0 : $damage * 2;
+            $damage = ($totalDice % 2 === 0) ? 0 : $damage * 2;
         }
 
         // 3. Special Damage Actions
-        if (in_array('reflect_stance', $buffs) && $diceResult >= 5) {
+        if (in_array('reflect_stance', $buffs) && $totalDice >= 5) {
             $otherPlayers = array_filter(array_keys($room['players']), fn($id) => $id !== $playerId);
             if (!empty($otherPlayers)) {
                 $damagePerPlayer = floor($damage / count($otherPlayers));
@@ -125,7 +176,7 @@ class SurvivalMode implements GameModeInterface
             $room['players'][$playerId]['active_buffs'] = $newBuffs;
         }
         
-        return $diceResult;
+        return $rolls;
     }
 
     public function checkGameOverCondition(array $room): bool

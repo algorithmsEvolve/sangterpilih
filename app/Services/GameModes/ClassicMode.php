@@ -9,10 +9,10 @@ class ClassicMode implements GameModeInterface
         return 0;
     }
 
-    public function processDiceRoll(array &$room, string $playerId, int $diceResult): int
+    public function processDiceRoll(array &$room, string $playerId, int $diceResult): array
     {
         $room['players'][$playerId]['score'] += $diceResult;
-        return $diceResult;
+        return [$diceResult];
     }
 
     public function checkGameOverCondition(array $room): bool

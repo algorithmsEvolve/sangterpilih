@@ -12,7 +12,7 @@ interface GameModeInterface
     /**
      * Processes how a dice roll affects the game state. Returns the final dice result (which might be modified by effects).
      */
-    public function processDiceRoll(array &$room, string $playerId, int $diceResult): int;
+    public function processDiceRoll(array &$room, string $playerId, int $diceResult): array;
 
     /**
      * Checks if the game has reached an ending condition.

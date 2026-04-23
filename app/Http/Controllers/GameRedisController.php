@@ -288,6 +288,7 @@ class GameRedisController extends Controller
                 'score' => $p['score'],
                 'is_host' => $p['is_host'],
                 'has_rolled_this_turn' => $p['has_rolled_this_turn'],
+                'active_buffs' => $p['active_buffs'] ?? [],
             ];
         }, $playersVal);
 
@@ -473,7 +474,11 @@ class GameRedisController extends Controller
         $modeService = $this->getModeService($room['mode'] ?? 'classic');
         $finalDiceResult = $modeService->processDiceRoll($room, $playerId, $diceResult);
 
-        $room['players'][$playerId]['has_rolled_this_turn'] = true;
+        if (!empty($room['players'][$playerId]['require_extra_roll'])) {
+            $room['players'][$playerId]['has_rolled_this_turn'] = false;
+        } else {
+            $room['players'][$playerId]['has_rolled_this_turn'] = true;
+        }
         
         $room['last_dice_result'] = $finalDiceResult;
         $room['last_roller_name'] = $room['players'][$playerId]['name'];
@@ -489,7 +494,7 @@ class GameRedisController extends Controller
             
             return response()->json([
                 'success' => true,
-                'diceResult' => $diceResult,
+                'diceResult' => $finalDiceResult,
                 'score' => $room['players'][$playerId]['score'],
                 'state' => $this->buildRoomState($room, false),
                 'myInventory' => $this->normalizeInventory($room['players'][$playerId]['inventory']),
@@ -503,7 +508,7 @@ class GameRedisController extends Controller
 
         return response()->json([
             'success' => true,
-            'diceResult' => $diceResult,
+            'diceResult' => $finalDiceResult,
             'score' => $room['players'][$playerId]['score'],
             'state' => $this->buildRoomState($room, false),
             'myInventory' => $this->normalizeInventory($room['players'][$playerId]['inventory']),
@@ -524,69 +529,10 @@ class GameRedisController extends Controller
             return response()->json(['error' => 'Lempar dadu dulu, baru akhiri giliran.'], 400);
         }
 
-        // Logic check trap
-        $potentialTrapUsers = [];
-        $catalog = $this->cardCatalog();
-        foreach ($room['players'] as $pId => $p) {
-            if ($pId !== $playerId) {
-                $hasTrap = false;
-                foreach ($p['inventory'] ?? [] as $invCardId) {
-                    if (isset($catalog[$invCardId]) && $catalog[$invCardId]['type'] === 'trap') {
-                        $hasTrap = true;
-                        break;
-                    }
-                }
-                if ($hasTrap) {
-                    $potentialTrapUsers[] = $pId;
-                }
-            }
-        }
-
-        if (count($potentialTrapUsers) > 0) {
-            $room['status'] = 'awaiting_trap_confirmation';
-            $room['pending_trap_confirmations'] = $potentialTrapUsers;
-            $room['trap_target_player_id'] = $playerId;
-            RoomRedisRepository::saveRoom($code, $room);
-            $this->broadcastState($code);
-            return response()->json(['success' => true]);
-        }
-
         $this->advanceTurn($room);
         RoomRedisRepository::saveRoom($code, $room);
         $this->broadcastState($code);
 
-        return response()->json(['success' => true]);
-    }
-
-    public function skipTrap(Request $request, $code)
-    {
-        $room = RoomRedisRepository::getRoom($code);
-        if (!$room) return response()->json(['error' => 'Room tidak ditemukan.'], 404);
-
-        $playerId = session('player_id');
-
-        if ($room['status'] !== 'awaiting_trap_confirmation') {
-            return response()->json(['error' => 'Gak ada trap yang perlu dikonfirmasi.'], 400);
-        }
-
-        $pending = $room['pending_trap_confirmations'] ?? [];
-        if (!in_array($playerId, $pending)) {
-            return response()->json(['error' => 'Lo gak perlu konfirmasi trap.'], 400);
-        }
-
-        $pending = array_values(array_filter($pending, function($id) use ($playerId) {
-            return $id !== $playerId;
-        }));
-        
-        $room['pending_trap_confirmations'] = $pending;
-
-        if (empty($pending)) {
-            $room['status'] = 'playing';
-            $this->advanceTurn($room);
-        }
-
-        RoomRedisRepository::saveRoom($code, $room);
-        $this->broadcastState($code);
         return response()->json(['success' => true]);
     }
 
@@ -651,6 +597,10 @@ class GameRedisController extends Controller
             return response()->json(['error' => 'Kartu cuma bisa dipakai saat game berjalan.'], 400);
         }
 
+        if ($room['status'] === 'playing' && $room['current_turn_player_id'] !== $playerId && $request->card_id !== 'skip_si') {
+            return response()->json(['error' => 'Sabar bos, ini bukan giliranmu! Kartu cuma bisa dipakai saat giliranmu.'], 400);
+        }
+
         $catalog = $this->cardCatalog();
         $cardId = $request->card_id;
 
@@ -685,6 +635,9 @@ class GameRedisController extends Controller
                 $effectPayload['cardId'] = $cardId;
                 $effectPayload['cardName'] = $catalog[$cardId]['name'];
                 $effectPayload['cardType'] = $catalog[$cardId]['type'];
+                if ($request->has('is_random') && $request->boolean('is_random')) {
+                    $effectPayload['isRandom'] = true;
+                }
             }
             $advanceTurn = !empty($result['advance_turn']);
             $forceDiceRollEvent = $result['force_dice_roll_event'] ?? null;
