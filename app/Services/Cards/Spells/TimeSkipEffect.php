@@ -8,11 +8,12 @@ class TimeSkipEffect implements CardEffectInterface
 {
     public function apply(array &$room, string $playerId, array $data): ?array
     {
-        $room['players'][$playerId]['active_buffs'][] = 'time_skip';
+        $room['players'][$playerId]['has_rolled_this_turn'] = true;
         return [
             'success' => true,
+            'advance_turn' => true,
             'payload' => [
-                'note' => $room['players'][$playerId]['name'] . ' melakukan Time Skip! Giliran ini tidak menerima damage.',
+                'note' => $room['players'][$playerId]['name'] . ' menggunakan Time Skip! Langsung akhiri giliran tanpa damage.',
             ]
         ];
     

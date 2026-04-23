@@ -338,7 +338,7 @@ class GameRedisController extends Controller
 
         if ($room['mode'] === 'survival') {
             $room['status'] = 'selecting_cards';
-            $room['selection_end_time'] = time() + 10;
+            $room['selection_end_time'] = time() + 30;
             foreach ($room['players'] as $pId => $p) {
                 $room['players'][$pId]['has_selected_cards'] = false;
             }
@@ -526,9 +526,19 @@ class GameRedisController extends Controller
 
         // Logic check trap
         $potentialTrapUsers = [];
+        $catalog = $this->cardCatalog();
         foreach ($room['players'] as $pId => $p) {
-            if ($pId !== $playerId && in_array(self::CARD_SKIP, $p['inventory'] ?? [])) {
-                $potentialTrapUsers[] = $pId;
+            if ($pId !== $playerId) {
+                $hasTrap = false;
+                foreach ($p['inventory'] ?? [] as $invCardId) {
+                    if (isset($catalog[$invCardId]) && $catalog[$invCardId]['type'] === 'trap') {
+                        $hasTrap = true;
+                        break;
+                    }
+                }
+                if ($hasTrap) {
+                    $potentialTrapUsers[] = $pId;
+                }
             }
         }
 
@@ -658,6 +668,8 @@ class GameRedisController extends Controller
         $effectClass = $catalog[$cardId]['effect_class'] ?? null;
         $effectPayload = null;
         $playerName = $room['players'][$playerId]['name'];
+        $advanceTurn = false;
+        $forceDiceRollEvent = null;
 
         if ($effectClass && class_exists($effectClass)) {
             $effect = app($effectClass);
@@ -674,6 +686,8 @@ class GameRedisController extends Controller
                 $effectPayload['cardName'] = $catalog[$cardId]['name'];
                 $effectPayload['cardType'] = $catalog[$cardId]['type'];
             }
+            $advanceTurn = !empty($result['advance_turn']);
+            $forceDiceRollEvent = $result['force_dice_roll_event'] ?? null;
         } else {
             // Fallback for hardcoded cards
             if ($cardId === self::CARD_MULTIPLIER) {
@@ -766,7 +780,7 @@ class GameRedisController extends Controller
         unset($inventory[$cardIndex]);
         $room['players'][$playerId]['inventory'] = array_values($inventory);
 
-        if ($cardId === self::CARD_SKIP) {
+        if ($cardId === self::CARD_SKIP || $advanceTurn) {
             $room['status'] = 'playing';
             $room['pending_trap_confirmations'] = [];
             $this->advanceTurn($room);
@@ -776,6 +790,18 @@ class GameRedisController extends Controller
 
         if ($effectPayload) {
             broadcast(new CardEffectUsed($code, $effectPayload));
+        }
+
+        if ($forceDiceRollEvent !== null) {
+            broadcast(new DiceRolled($code, $playerId, $forceDiceRollEvent, $room['players'][$playerId]['score']));
+            $modeService = $this->getModeService($room['mode'] ?? 'classic');
+            if ($modeService->checkGameOverCondition($room)) {
+                $room['status'] = 'finished';
+                $leaderboard = array_values($room['players']);
+                usort($leaderboard, function($a, $b) { return $b['score'] <=> $a['score']; });
+                RoomRedisRepository::saveRoom($code, $room);
+                broadcast(new GameOver($code, $leaderboard));
+            }
         }
 
         $this->broadcastState($code);
