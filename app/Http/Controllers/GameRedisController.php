@@ -85,7 +85,12 @@ class GameRedisController extends Controller
         $spells = config('cards.spells', []);
         $traps = config('cards.traps', []);
 
-        return array_merge($oldCards, $spells, $traps);
+        $merged = array_merge($oldCards, $spells, $traps);
+
+        return array_map(function ($card) {
+            $card['not_available'] = (int) ($card['not_available'] ?? 0);
+            return $card;
+        }, $merged);
     }
 
     private function normalizeInventory(?array $inventory): array
@@ -390,10 +395,17 @@ class GameRedisController extends Controller
 
         $spells = $request->input('spells', []);
         $traps = $request->input('traps', []);
+        $catalog = $this->cardCatalog();
 
         // Validate max 2 spells, 1 trap. We can just take the first 2 and 1 if more are provided.
         $spells = array_slice($spells, 0, 2);
         $traps = array_slice($traps, 0, 1);
+        $spells = array_values(array_filter($spells, function ($cardId) use ($catalog) {
+            return isset($catalog[$cardId]) && ($catalog[$cardId]['type'] ?? null) === 'spell' && empty($catalog[$cardId]['not_available']);
+        }));
+        $traps = array_values(array_filter($traps, function ($cardId) use ($catalog) {
+            return isset($catalog[$cardId]) && ($catalog[$cardId]['type'] ?? null) === 'trap' && empty($catalog[$cardId]['not_available']);
+        }));
         $inventory = array_merge($spells, $traps);
 
         $room['players'][$playerId]['inventory'] = $inventory;
@@ -562,6 +574,10 @@ class GameRedisController extends Controller
         }
 
         $card = $catalog[$cardId];
+        if (!empty($card['not_available'])) {
+            return response()->json(['error' => 'Kartu ini belum tersedia.'], 400);
+        }
+
         if ($room['players'][$playerId]['score'] < $card['price']) {
             return response()->json(['error' => 'Poin lo belum cukup buat beli kartu ini.'], 400);
         }
@@ -606,6 +622,10 @@ class GameRedisController extends Controller
 
         if (!isset($catalog[$cardId])) {
             return response()->json(['error' => 'Kartu tidak valid.'], 400);
+        }
+
+        if (!empty($catalog[$cardId]['not_available'])) {
+            return response()->json(['error' => 'Kartu ini belum tersedia.'], 400);
         }
 
         $inventory = $room['players'][$playerId]['inventory'] ?? [];

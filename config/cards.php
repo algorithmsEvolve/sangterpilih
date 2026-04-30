@@ -97,6 +97,7 @@ return [
             'icon' => '🩸',
             'color' => 'bg-red-700',
             'effect_class' => \App\Services\Cards\Spells\BloodSacrificeEffect::class,
+            'not_available' => 1,
         ],
         'amnesty' => [
             'id' => 'amnesty',
@@ -124,6 +125,7 @@ return [
             'icon' => '👼',
             'color' => 'bg-yellow-300',
             'effect_class' => \App\Services\Cards\Spells\GuardianAngelEffect::class,
+            'not_available' => 1,
         ],
         'equalizer' => [
             'id' => 'equalizer',
@@ -244,6 +246,7 @@ return [
             'icon' => '👁️‍🗨️',
             'color' => 'bg-black',
             'effect_class' => \App\Services\Cards\Traps\BlindfoldEffect::class,
+            'not_available' => 1,
         ],
     ]
 ];

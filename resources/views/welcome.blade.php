@@ -264,8 +264,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         @if(!empty($spells))
                             @foreach($spells as $card)
-                                            <div
-                                                class="bg-slate-800/80 border border-slate-700 p-5 rounded-xl flex gap-4 hover:border-emerald-500/50 transition transform hover:-translate-y-1 shadow-lg hover:shadow-emerald-500/20 group">
+                                            <div class="relative bg-slate-800/80 border border-slate-700 p-5 rounded-xl flex gap-4 transition transform shadow-lg group {{ !empty($card['not_available']) ? 'opacity-45 grayscale' : 'hover:border-emerald-500/50 hover:-translate-y-1 hover:shadow-emerald-500/20' }}">
+                                                @if(!empty($card['not_available']))
+                                                    <div class="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+                                                        <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
+                                                    </div>
+                                                @endif
                                                 <div class="text-4xl shrink-0 group-hover:scale-110 transition-transform">{{ $card['icon']
                                 ?? '✨' }}</div>
                                                 <div>
@@ -288,8 +292,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         @if(!empty($traps))
                             @foreach($traps as $card)
-                                            <div
-                                                class="bg-slate-800/80 border border-slate-700 p-5 rounded-xl flex gap-4 hover:border-red-500/50 transition transform hover:-translate-y-1 shadow-lg hover:shadow-red-500/20 group">
+                                            <div class="relative bg-slate-800/80 border border-slate-700 p-5 rounded-xl flex gap-4 transition transform shadow-lg group {{ !empty($card['not_available']) ? 'opacity-45 grayscale' : 'hover:border-red-500/50 hover:-translate-y-1 hover:shadow-red-500/20' }}">
+                                                @if(!empty($card['not_available']))
+                                                    <div class="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+                                                        <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
+                                                    </div>
+                                                @endif
                                                 <div class="text-4xl shrink-0 group-hover:scale-110 transition-transform">{{ $card['icon']
                                 ?? '☠️' }}</div>
                                                 <div>

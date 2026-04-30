@@ -326,6 +326,10 @@
                     class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">
                     Number Battle @hasSection('mode_name')<span class="text-xl ml-2 text-pink-300">-
                     @yield('mode_name')</span>@endif</h1>
+                <button @click="showHistoryModal = true"
+                    class="mt-2 text-xs bg-slate-800/70 border border-violet-400/30 hover:border-violet-300 hover:bg-slate-700/70 px-3 py-1.5 rounded-full text-violet-200 transition">
+                    Action History
+                </button>
                 <p class="text-slate-400">Room: <span class="text-white font-bold">{{ $room->code }}</span></p>
                 <p class="text-xs text-slate-500 mt-1" x-show="status === 'playing'">Ronde <span
                         class="text-white font-bold" x-text="currentRound"></span> / <span x-text="totalRounds"></span>
@@ -623,14 +627,22 @@
                 <div
                     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto pr-1 justify-center place-content-center mx-auto">
                     <template x-for="card in cardCatalog" :key="card.id">
-                        <div @click="!isBuyingCard ? buyCard(card.id) : null"
-                            class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[140px] p-2.5 relative group mx-auto w-full max-w-[140px]"
-                            :class="card.type === 'trap' ? 'trap' : 'spell'">
+                        <div @click="(!isBuyingCard && !card.not_available) ? buyCard(card.id) : null"
+                            class="nb-card-shell transition-all duration-200 min-h-[140px] p-2.5 relative group mx-auto w-full max-w-[140px]"
+                            :class="[
+                                card.type === 'trap' ? 'trap' : 'spell',
+                                card.not_available ? 'opacity-45 grayscale cursor-not-allowed' : 'cursor-pointer'
+                            ]">
+                            <div x-show="card.not_available" class="absolute inset-0 pointer-events-none overflow-hidden rounded-[10px] z-20">
+                                <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
+                            </div>
                             <div
-                                class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-lg">
+                                class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center transition-opacity z-10 rounded-lg"
+                                :class="card.not_available ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'">
                                 <span class="text-yellow-400 font-bold text-sm mb-1"
-                                    x-text="card.price + ' pts'"></span>
-                                <span class="bg-indigo-600 text-white text-xs px-2.5 py-1 rounded">CLICK TO BUY</span>
+                                    x-text="card.not_available ? 'UNAVAILABLE' : (card.price + ' pts')"></span>
+                                <span class="bg-indigo-600 text-white text-xs px-2.5 py-1 rounded"
+                                    x-text="card.not_available ? 'DISABLED' : 'CLICK TO BUY'"></span>
                             </div>
                             <div class="flex items-center justify-between text-xs font-black mb-2 text-slate-100">
                                 <span x-text="card.name" class="truncate max-w-[100%]"></span>
@@ -747,13 +759,17 @@
                             Spells (Pilih <span x-text="selectedSpells.length"></span>/2)</h3>
                         <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
                             <template x-for="card in cardCatalog.filter(c => c.type === 'spell' && !['multiplier', 'skip_si'].includes(c.id))" :key="card.id">
-                                <div @click="toggleLoadoutCard(card)"
+                                <div @click="!card.not_available && toggleLoadoutCard(card)"
                                     class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
                                     :class="[
                                         'spell',
                                         selectedSpells.includes(card.id) ? 'ring-2 ring-emerald-400 transform scale-[1.05] bg-emerald-900/50' : 'hover:border-emerald-400/50',
-                                        (selectedSpells.length >= 2 && !selectedSpells.includes(card.id)) ? 'opacity-50 grayscale' : ''
+                                        (selectedSpells.length >= 2 && !selectedSpells.includes(card.id)) ? 'opacity-50 grayscale' : '',
+                                        card.not_available ? 'opacity-45 grayscale cursor-not-allowed hover:border-transparent' : ''
                                      ]">
+                                    <div x-show="card.not_available" class="absolute inset-0 pointer-events-none overflow-hidden rounded-[10px] z-20">
+                                        <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
+                                    </div>
                                     <div
                                         class="flex items-center justify-between text-[8px] font-black mb-1 text-slate-100">
                                         <span x-text="card.name" class="truncate max-w-[80%]"></span>
@@ -778,13 +794,17 @@
                             Traps (Pilih <span x-text="selectedTraps.length"></span>/1)</h3>
                         <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
                             <template x-for="card in cardCatalog.filter(c => c.type === 'trap' && !['multiplier', 'skip_si'].includes(c.id))" :key="card.id">
-                                <div @click="toggleLoadoutCard(card)"
+                                <div @click="!card.not_available && toggleLoadoutCard(card)"
                                     class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
                                     :class="[
                                         'trap',
                                         selectedTraps.includes(card.id) ? 'ring-2 ring-red-400 transform scale-[1.05] bg-red-900/50' : 'hover:border-red-400/50',
-                                        (selectedTraps.length >= 1 && !selectedTraps.includes(card.id)) ? 'opacity-50 grayscale' : ''
+                                        (selectedTraps.length >= 1 && !selectedTraps.includes(card.id)) ? 'opacity-50 grayscale' : '',
+                                        card.not_available ? 'opacity-45 grayscale cursor-not-allowed hover:border-transparent' : ''
                                      ]">
+                                    <div x-show="card.not_available" class="absolute inset-0 pointer-events-none overflow-hidden rounded-[10px] z-20">
+                                        <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
+                                    </div>
                                     <div
                                         class="flex items-center justify-between text-[8px] font-black mb-1 text-slate-100">
                                         <span x-text="card.name" class="truncate max-w-[80%]"></span>
@@ -809,6 +829,40 @@
                         <span
                             x-text="hasSelectedCards ? 'Menunggu Pemain Lain...' : (isSubmittingLoadout ? 'Menyimpan...' : 'KUNCI LOADOUT')"></span>
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action History Modal -->
+        <div x-show="showHistoryModal" x-cloak @click.self="showHistoryModal = false"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div class="glass-panel rounded-2xl w-full max-w-2xl p-6 border border-violet-400/30 max-h-[80vh] flex flex-col"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-2xl font-bold text-violet-300">Action History</h3>
+                    <button @click="showHistoryModal = false" class="text-slate-300 hover:text-white">Tutup</button>
+                </div>
+                <p class="text-xs text-slate-400 mb-3">Menampilkan semua aksi kecuali roll dice dan end turn.</p>
+                <div class="flex-1 overflow-y-auto pr-1 space-y-2">
+                    <template x-if="actionHistory.length === 0">
+                        <div class="rounded-xl border border-white/10 bg-slate-900/60 p-4 text-center text-slate-400">
+                            Belum ada aksi tercatat.
+                        </div>
+                    </template>
+                    <template x-for="(entry, idx) in actionHistory" :key="'hist-' + idx">
+                        <div class="rounded-xl border px-4 py-3"
+                            :class="entry.type === 'trap'
+                                ? 'border-red-400/40 bg-red-900/25'
+                                : 'border-emerald-400/40 bg-emerald-900/25'">
+                            <div class="text-[10px] uppercase tracking-wider text-slate-500" x-text="entry.time"></div>
+                            <div class="text-sm text-slate-100 font-medium" x-text="entry.message"></div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -845,6 +899,7 @@
                 leaderboard: [],
                 cardCatalog: @json($cardCatalog ?? []),
                 showKickModal: false,
+                showHistoryModal: false,
                 isSkippingTrap: false,
                 playerToKick: null,
                 showGamblerModal: false,
@@ -873,6 +928,7 @@
                 selectedTraps: [],
                 hasSelectedCards: false,
                 loadoutTimer: null,
+                actionHistory: [],
                 effectNotice: {
                     show: false,
                     type: 'spell',
@@ -926,6 +982,8 @@
                                 p.cardName || 'Kartu',
                                 msg
                             );
+                            // Store exactly the same message shown in effect notice.
+                            this.pushAction(msg, p.cardType || 'spell');
                         })
                         .listen('GameOver', (e) => {
                             this.status = 'finished';
@@ -1015,6 +1073,24 @@
                     this.toast.timeout = setTimeout(() => {
                         this.toast.show = false;
                     }, 2600);
+                },
+
+                pushAction(message, type = 'spell') {
+                    const now = new Date();
+                    const time = now.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    this.actionHistory.unshift({ time, message, type });
+                    if (this.actionHistory.length > 120) {
+                        this.actionHistory = this.actionHistory.slice(0, 120);
+                    }
+                },
+
+                nameById(playerId) {
+                    const player = this.players.find((p) => p.id === playerId);
+                    return player ? player.name : null;
                 },
 
                 canUseCard(cardId, ownerPlayerId = null) {
