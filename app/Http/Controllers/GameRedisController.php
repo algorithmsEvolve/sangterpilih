@@ -749,9 +749,13 @@ class GameRedisController extends Controller
             }
         }
 
-        // Remove card from inventory
-        unset($inventory[$cardIndex]);
-        $room['players'][$playerId]['inventory'] = array_values($inventory);
+        // Remove used card from inventory (fresh read: effects may append cards first)
+        $invAfter = $room['players'][$playerId]['inventory'] ?? [];
+        $removeIdx = array_search($cardId, $invAfter, true);
+        if ($removeIdx !== false) {
+            unset($invAfter[$removeIdx]);
+            $room['players'][$playerId]['inventory'] = array_values($invAfter);
+        }
 
         if ($cardId === self::CARD_SKIP || $advanceTurn) {
             $room['status'] = 'playing';

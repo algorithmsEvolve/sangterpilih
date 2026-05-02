@@ -1215,7 +1215,7 @@
                     const cardData = this.cardCatalog.find(c => c.id === cardId);
 
                     const targetedCards = [
-                        'blood_sacrifice', 'curse_heavy_bones', 'blood_siphon',
+                        'curse_heavy_bones', 'blood_siphon',
                         'forced_reroll', 'poison_dart', 'karma',
                         'reverse_fortune', 'sabotage', 'time_bomb', 'blindfold'
                     ];

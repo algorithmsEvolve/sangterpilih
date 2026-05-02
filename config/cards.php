@@ -92,12 +92,11 @@ return [
         'blood_sacrifice' => [
             'id' => 'blood_sacrifice',
             'name' => 'Blood Sacrifice',
-            'description' => 'Korbankan 300 LP milik Anda untuk mencuri 1 kartu acak dari lawan.',
+            'description' => 'Korbankan 300 LP. Curi 1 Spell atau Trap acak (belum dipakai) dari salah satu lawan secara acak.',
             'type' => 'spell',
             'icon' => '🩸',
             'color' => 'bg-red-700',
             'effect_class' => \App\Services\Cards\Spells\BloodSacrificeEffect::class,
-            'not_available' => 1,
         ],
         'amnesty' => [
             'id' => 'amnesty',
