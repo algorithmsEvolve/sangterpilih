@@ -9,10 +9,14 @@ class EqualizerEffect implements CardEffectInterface
     public function apply(array &$room, string $playerId, array $data): ?array
     {
         $lowestScore = PHP_INT_MAX;
-        foreach ($room['players'] as $p) {
-            if ($p['score'] < $lowestScore) {
+        foreach ($room['players'] as $pid => $p) {
+            if ($pid !== $playerId && $p['score'] < $lowestScore) {
                 $lowestScore = $p['score'];
             }
+        }
+        
+        if ($lowestScore === PHP_INT_MAX) {
+            $lowestScore = $room['players'][$playerId]['score'];
         }
         $room['players'][$playerId]['score'] = $lowestScore + 300;
         return [

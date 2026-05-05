@@ -129,7 +129,7 @@ return [
         'equalizer' => [
             'id' => 'equalizer',
             'name' => 'Equalizer',
-            'description' => 'Menyamakan LP Anda dengan pemain LP terendah, lalu ditambah 300 LP.',
+            'description' => 'Menyamakan LP Anda dengan pemain lain LP terendah, lalu ditambah 300 LP.',
             'type' => 'spell',
             'icon' => '🟰',
             'color' => 'bg-gray-500',

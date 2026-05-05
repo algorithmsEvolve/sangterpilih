@@ -397,9 +397,9 @@ class GameRedisController extends Controller
         $traps = $request->input('traps', []);
         $catalog = $this->cardCatalog();
 
-        // Validate max 2 spells, 1 trap. We can just take the first 2 and 1 if more are provided.
+        // Validate max 2 spells, 2 trap. We can just take the first 2 and 2 if more are provided.
         $spells = array_slice($spells, 0, 2);
-        $traps = array_slice($traps, 0, 1);
+        $traps = array_slice($traps, 0, 2);
         $spells = array_values(array_filter($spells, function ($cardId) use ($catalog) {
             return isset($catalog[$cardId]) && ($catalog[$cardId]['type'] ?? null) === 'spell' && empty($catalog[$cardId]['not_available']);
         }));

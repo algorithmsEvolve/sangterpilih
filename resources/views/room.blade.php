@@ -747,7 +747,7 @@
                     <p class="text-slate-300">Waktu tersisa: <span class="font-mono text-2xl font-bold text-yellow-400"
                             x-text="loadoutTimeLeft"></span> detik</p>
                     <p class="text-sm text-slate-400 mt-1">Pilih maksimal <span class="text-emerald-300 font-bold">2
-                            Spell</span> dan <span class="text-red-300 font-bold">1 Trap</span> untuk bertahan hidup.
+                            Spell</span> dan <span class="text-red-300 font-bold">2 Trap</span> untuk bertahan hidup.
                     </p>
                 </div>
 
@@ -791,7 +791,7 @@
                     <div>
                         <h3
                             class="text-lg font-bold text-red-400 mb-2 sticky top-0 bg-slate-900/80 backdrop-blur py-1 z-10 border-b border-red-500/20">
-                            Traps (Pilih <span x-text="selectedTraps.length"></span>/1)</h3>
+                            Traps (Pilih <span x-text="selectedTraps.length"></span>/2)</h3>
                         <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
                             <template x-for="card in cardCatalog.filter(c => c.type === 'trap' && !['multiplier', 'skip_si'].includes(c.id))" :key="card.id">
                                 <div @click="!card.not_available && toggleLoadoutCard(card)"
@@ -799,7 +799,7 @@
                                     :class="[
                                         'trap',
                                         selectedTraps.includes(card.id) ? 'ring-2 ring-red-400 transform scale-[1.05] bg-red-900/50' : 'hover:border-red-400/50',
-                                        (selectedTraps.length >= 1 && !selectedTraps.includes(card.id)) ? 'opacity-50 grayscale' : '',
+                                        (selectedTraps.length >= 2 && !selectedTraps.includes(card.id)) ? 'opacity-50 grayscale' : '',
                                         card.not_available ? 'opacity-45 grayscale cursor-not-allowed hover:border-transparent' : ''
                                      ]">
                                     <div x-show="card.not_available" class="absolute inset-0 pointer-events-none overflow-hidden rounded-[10px] z-20">
@@ -1333,7 +1333,7 @@
                     } else if (card.type === 'trap') {
                         if (this.selectedTraps.includes(card.id)) {
                             this.selectedTraps = this.selectedTraps.filter(id => id !== card.id);
-                        } else if (this.selectedTraps.length < 1) {
+                        } else if (this.selectedTraps.length < 2) {
                             this.selectedTraps = [...this.selectedTraps, card.id];
                         }
                     }
