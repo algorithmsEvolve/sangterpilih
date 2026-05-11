@@ -8,9 +8,22 @@ class BloodSacrificeEffect implements CardEffectInterface
 {
     public function apply(array &$room, string $playerId, array $data): ?array
     {
-        if ($room['players'][$playerId]['score'] <= 300) {
-            return ['error' => 'LP Anda tidak cukup untuk mengorbankan darah! Minimal butuh lebih dari 300 LP.'];
+        $currentLp = $room['players'][$playerId]['score'];
+        if ($currentLp <= 0) {
+            return ['error' => 'LP Anda tidak cukup untuk mengorbankan darah!'];
         }
+
+        $currentRound = $room['current_round'] ?? 1;
+        $percentage = 0.2; // Ronde 4+
+        if ($currentRound == 1) {
+            $percentage = 0.8;
+        } elseif ($currentRound == 2) {
+            $percentage = 0.6;
+        } elseif ($currentRound == 3) {
+            $percentage = 0.4;
+        }
+
+        $cost = (int) floor($currentLp * $percentage);
 
         $catalog = array_merge(config('cards.spells', []), config('cards.traps', []));
 
@@ -46,7 +59,7 @@ class BloodSacrificeEffect implements CardEffectInterface
         $pool = $byPlayer[$victimId];
         $pick = $pool[array_rand($pool)];
 
-        $room['players'][$playerId]['score'] -= 300;
+        $room['players'][$playerId]['score'] -= $cost;
 
         $victimInv = $room['players'][$victimId]['inventory'];
         unset($victimInv[$pick['index']]);
@@ -63,7 +76,7 @@ class BloodSacrificeEffect implements CardEffectInterface
                 'stolenCardId' => $pick['cardId'],
                 'stolenCardName' => $cardName,
                 'note' => $room['players'][$playerId]['name']
-                    . ' mengorbankan 300 LP dan mencuri '
+                    . ' mengorbankan ' . $cost . ' LP (' . ($percentage * 100) . '%) dan mencuri '
                     . $cardName
                     . ' dari '
                     . $room['players'][$victimId]['name']

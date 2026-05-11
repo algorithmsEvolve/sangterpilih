@@ -92,7 +92,7 @@ return [
         'blood_sacrifice' => [
             'id' => 'blood_sacrifice',
             'name' => 'Blood Sacrifice',
-            'description' => 'Korbankan 300 LP. Curi 1 Spell atau Trap acak (belum dipakai) dari salah satu lawan secara acak.',
+            'description' => 'Korbankan LP (R1: 80%, R2: 60%, R3: 40%, R4+: 20%). Curi 1 Spell atau Trap acak (belum dipakai) dari salah satu lawan secara acak.',
             'type' => 'spell',
             'icon' => '🩸',
             'color' => 'bg-red-700',
