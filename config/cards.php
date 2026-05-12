@@ -116,16 +116,6 @@ return [
             'color' => 'bg-purple-400',
             'effect_class' => \App\Services\Cards\Spells\ReflectStanceEffect::class,
         ],
-        'guardian_angel' => [
-            'id' => 'guardian_angel',
-            'name' => 'Guardian Angel',
-            'description' => 'Kebal dari serangan Trap lawan hingga giliran Anda berikutnya.',
-            'type' => 'spell',
-            'icon' => '👼',
-            'color' => 'bg-yellow-300',
-            'effect_class' => \App\Services\Cards\Spells\GuardianAngelEffect::class,
-            'not_available' => 1,
-        ],
         'equalizer' => [
             'id' => 'equalizer',
             'name' => 'Equalizer',
@@ -236,16 +226,6 @@ return [
             'icon' => '💣',
             'color' => 'bg-orange-600',
             'effect_class' => \App\Services\Cards\Traps\TimeBombEffect::class,
-        ],
-        'blindfold' => [
-            'id' => 'blindfold',
-            'name' => 'Blindfold',
-            'description' => 'Menyembunyikan UI target, dan hasil dadu target berikutnya otomatis +1.',
-            'type' => 'trap',
-            'icon' => '👁️‍🗨️',
-            'color' => 'bg-black',
-            'effect_class' => \App\Services\Cards\Traps\BlindfoldEffect::class,
-            'not_available' => 1,
         ],
     ]
 ];
