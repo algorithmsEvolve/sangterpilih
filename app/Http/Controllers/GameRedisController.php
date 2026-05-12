@@ -111,6 +111,7 @@ class GameRedisController extends Controller
                 'is_host' => $p['is_host'],
                 'hasRolledThisTurn' => $p['has_rolled_this_turn'],
                 'has_selected_cards' => $p['has_selected_cards'] ?? false,
+                'active_buffs' => $p['active_buffs'] ?? [],
                 'inventory' => $includeInventories ? $this->normalizeInventory($p['inventory']) : [],
             ];
         }, $players);

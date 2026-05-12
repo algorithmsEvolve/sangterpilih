@@ -356,13 +356,21 @@
                         <li class="flex justify-between items-center bg-slate-800/50 px-4 py-3 rounded-lg border border-slate-700/50"
                             :class="{'ring-2 ring-violet-500 bg-violet-900/30': status === 'playing' && currentTurn === p.id}">
                             <div class="flex flex-col gap-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-3 h-3 rounded-full"
+                                <div class="flex items-center gap-2 relative">
+                                    <span class="w-3 h-3 rounded-full shrink-0"
                                         :class="p.id === currentTurn && status === 'playing' ? 'bg-green-400 animate-pulse' : 'bg-slate-600'"></span>
-                                    <span x-text="p.name"
+                                    
+                                    <!-- Trap Countdown Icon -->
+                                    <template x-if="getTrapTurns(p) > 0">
+                                        <div class="flex items-center justify-center w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold border border-red-400 shadow-[0_0_8px_rgba(220,38,38,0.5)] animate-bounce shrink-0" title="Trap is going to affect this player!">
+                                            <span x-text="getTrapTurns(p)"></span>
+                                        </div>
+                                    </template>
+
+                                    <span x-text="p.name" class="truncate"
                                         :class="{'font-bold text-violet-300': p.id == currentPlayerId}"></span>
                                     <span x-show="p.is_host"
-                                        class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded ml-2">Host</span>
+                                        class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded ml-1 shrink-0">Host</span>
                                 </div>
                                 <div x-show="p.active_buffs && p.active_buffs.length > 0" class="flex flex-wrap gap-1 ml-5">
                                     <template x-for="buff in p.active_buffs">
@@ -893,6 +901,30 @@
                     ...p,
                     hasRolledThisTurn: !!p.has_rolled_this_turn,
                 })),
+
+                getTrapTurns(player) {
+                    if (!player || !player.active_buffs || player.active_buffs.length === 0) return 0;
+                    let minTurns = 99;
+                    let found = false;
+                    player.active_buffs.forEach(buff => {
+                        if (buff.startsWith('time_bomb:')) {
+                            let t = parseInt(buff.split(':')[1]);
+                            if (t < minTurns) minTurns = t;
+                            found = true;
+                        } else if ([
+                            'curse_heavy_bones', 
+                            'forced_reroll', 
+                            'reverse_fortune', 
+                            'sabotaged',
+                            'blindfold'
+                        ].includes(buff)) {
+                            if (1 < minTurns) minTurns = 1;
+                            found = true;
+                        }
+                    });
+                    return found ? minTurns : 0;
+                },
+
                 myInventory: @json($myInventory ?? []),
                 recentDice: @json($room->last_dice_result ?? [0]),
                 lastRollerName: @json($room->last_roller_name ?? ''),
