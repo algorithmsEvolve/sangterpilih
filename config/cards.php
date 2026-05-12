@@ -143,6 +143,15 @@ return [
             'color' => 'bg-yellow-400',
             'effect_class' => \App\Services\Cards\Spells\AdrenalineRushEffect::class,
         ],
+        'angel_cure' => [
+            'id' => 'angel_cure',
+            'name' => 'Angel Cure',
+            'description' => 'Batalkan trap yang mengarah ke anda.',
+            'type' => 'spell',
+            'icon' => '😇',
+            'color' => 'bg-blue-300',
+            'effect_class' => \App\Services\Cards\Spells\AngelCureEffect::class,
+        ],
     ],
 
     'traps' => [
