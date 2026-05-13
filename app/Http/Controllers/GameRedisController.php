@@ -182,18 +182,7 @@ class GameRedisController extends Controller
             $room['current_round']++;
         }
 
-        $modeService = $this->getModeService($room['mode'] ?? 'classic');
-        if ($modeService->checkGameOverCondition($room)) {
-            $room['status'] = 'finished';
-            
-            // Leaderboard
-            $leaderboard = $players;
-            usort($leaderboard, function($a, $b) { return $b['score'] <=> $a['score']; });
-            
-            // We must save before broadcast so DB state is consistent
-            RoomRedisRepository::saveRoom($room['code'], $room);
-            broadcast(new GameOver($room['code'], $leaderboard));
-            $this->broadcastState($room['code']);
+        if ($this->checkAndTriggerGameOver($room, $room['code'])) {
             return null;
         }
 
@@ -205,6 +194,24 @@ class GameRedisController extends Controller
 
         $this->startTurnSnapshot($room, $nextPlayer);
         return ['nextPlayerId' => $nextPlayer['id']];
+    }
+
+    private function checkAndTriggerGameOver(array &$room, string $code): bool
+    {
+        if (($room['status'] ?? '') === 'finished') return true;
+
+        $modeService = $this->getModeService($room['mode'] ?? 'classic');
+        if ($modeService->checkGameOverCondition($room)) {
+            $room['status'] = 'finished';
+            $leaderboard = array_values($room['players']);
+            usort($leaderboard, function($a, $b) { return $b['score'] <=> $a['score']; });
+
+            RoomRedisRepository::saveRoom($code, $room);
+            broadcast(new GameOver($code, $leaderboard));
+            $this->broadcastState($code);
+            return true;
+        }
+        return false;
     }
 
     public function createRoom(Request $request)
@@ -496,15 +503,7 @@ class GameRedisController extends Controller
         $room['last_dice_result'] = $finalDiceResult;
         $room['last_roller_name'] = $room['players'][$playerId]['name'];
         
-        if ($modeService->checkGameOverCondition($room)) {
-            $room['status'] = 'finished';
-            $leaderboard = array_values($room['players']);
-            usort($leaderboard, function($a, $b) { return $b['score'] <=> $a['score']; });
-            
-            RoomRedisRepository::saveRoom($code, $room);
-            broadcast(new GameOver($room['code'], $leaderboard));
-            $this->broadcastState($room['code']);
-            
+        if ($this->checkAndTriggerGameOver($room, $code)) {
             return response()->json([
                 'success' => true,
                 'diceResult' => $finalDiceResult,
@@ -587,7 +586,10 @@ class GameRedisController extends Controller
         $room['players'][$playerId]['score'] -= $card['price'];
         
         RoomRedisRepository::saveRoom($code, $room);
-        $this->broadcastState($code);
+        
+        if (!$this->checkAndTriggerGameOver($room, $code)) {
+            $this->broadcastState($code);
+        }
 
         return response()->json([
             'success' => true,
@@ -772,17 +774,11 @@ class GameRedisController extends Controller
 
         if ($forceDiceRollEvent !== null) {
             broadcast(new DiceRolled($code, $playerId, $forceDiceRollEvent, $room['players'][$playerId]['score']));
-            $modeService = $this->getModeService($room['mode'] ?? 'classic');
-            if ($modeService->checkGameOverCondition($room)) {
-                $room['status'] = 'finished';
-                $leaderboard = array_values($room['players']);
-                usort($leaderboard, function($a, $b) { return $b['score'] <=> $a['score']; });
-                RoomRedisRepository::saveRoom($code, $room);
-                broadcast(new GameOver($code, $leaderboard));
-            }
         }
 
-        $this->broadcastState($code);
+        if (!$this->checkAndTriggerGameOver($room, $code)) {
+            $this->broadcastState($code);
+        }
         
         return response()->json([
             'success' => true,

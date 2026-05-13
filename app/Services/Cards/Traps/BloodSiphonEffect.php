@@ -14,8 +14,7 @@ class BloodSiphonEffect implements CardEffectInterface
             if (empty($otherIds)) return ['error' => 'Tidak ada target lain.'];
             $targetId = $otherIds[array_rand($otherIds)];
         }
-        $stealAmount = min(300, $room['players'][$targetId]['score'] - 1);
-        if ($stealAmount <= 0) return ['error' => 'Target sudah sekarat!'];
+        $stealAmount = 300;
         
         $room['players'][$targetId]['score'] -= $stealAmount;
         $room['players'][$playerId]['score'] += $stealAmount;
