@@ -152,6 +152,15 @@ return [
             'color' => 'bg-blue-300',
             'effect_class' => \App\Services\Cards\Spells\AngelCureEffect::class,
         ],
+        'bpjs' => [
+            'id' => 'bpjs',
+            'name' => 'BPJS',
+            'description' => 'Memulihkan LP player lain 300 LP dan memulihkan diri sendiri 700 LP.',
+            'type' => 'spell',
+            'icon' => '🏥',
+            'color' => 'bg-green-300',
+            'effect_class' => \App\Services\Cards\Spells\BpjsEffect::class,
+        ],
     ],
 
     'traps' => [
