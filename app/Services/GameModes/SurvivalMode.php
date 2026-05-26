@@ -142,39 +142,38 @@ class SurvivalMode implements GameModeInterface
             $room['players'][$playerId]['score'] = 1;
         }
 
+        $newBuffs = [];
+
+        // Check if there's an adrenaline heal from last turn
+        foreach ($buffs as $buff) {
+            if (str_starts_with($buff, 'adrenaline_heal:')) {
+                $healAmount = (int) explode(':', $buff)[1];
+                $room['players'][$playerId]['score'] += $healAmount;
+                // adrenaline_heal is consumed, don't add to newBuffs
+            }
+        }
+
+        // Process Adrenaline Rush for NEXT turn
         if (in_array('adrenaline_rush', $buffs)) {
             // Need to pass to next turn, so we convert it to a heal buff
-            $room['players'][$playerId]['active_buffs'] = ['adrenaline_heal:' . ($damage * 2)];
-        } else {
-            // Check if there's an adrenaline heal from last turn
-            $healAmount = 0;
-            foreach ($buffs as $buff) {
-                if (str_starts_with($buff, 'adrenaline_heal:')) {
-                    $healAmount = (int) explode(':', $buff)[1];
-                    $room['players'][$playerId]['score'] += $healAmount;
-                    break;
-                }
-            }
-            
-            // Check time bombs
-            $newBuffs = [];
-            foreach ($buffs as $buff) {
-                if (str_starts_with($buff, 'time_bomb:')) {
-                    $turnsLeft = (int) explode(':', $buff)[1];
-                    $turnsLeft--;
-                    if ($turnsLeft <= 0) {
-                        $room['players'][$playerId]['score'] -= 800; // Explode!
-                    } else {
-                        $newBuffs[] = "time_bomb:$turnsLeft"; // Keep it
-                    }
-                }
-                // Keep sabotaged? Sabotaged lasts 1 round, but we can clear it here since they rolled.
-                // Wait, if they are sabotaged, they can't use spells THIS turn. So it clears after roll.
-            }
-            
-            // Clear buffs that only last 1 roll (everything except what we explicitly kept)
-            $room['players'][$playerId]['active_buffs'] = $newBuffs;
+            $newBuffs[] = 'adrenaline_heal:' . ($damage * 2);
         }
+
+        // Check time bombs
+        foreach ($buffs as $buff) {
+            if (str_starts_with($buff, 'time_bomb:')) {
+                $turnsLeft = (int) explode(':', $buff)[1];
+                $turnsLeft--;
+                if ($turnsLeft <= 0) {
+                    $room['players'][$playerId]['score'] -= 800; // Explode!
+                } else {
+                    $newBuffs[] = "time_bomb:$turnsLeft"; // Keep it
+                }
+            }
+        }
+
+        // Update active buffs with what's left
+        $room['players'][$playerId]['active_buffs'] = $newBuffs;
         
         return $rolls;
     }
