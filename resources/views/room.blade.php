@@ -337,7 +337,7 @@
             </div>
             <div class="text-right flex items-center space-x-4">
                 <p class="text-slate-400">You are <span
-                        class="font-bold text-violet-400 truncate max-w-[100px] inline-block align-bottom" title="{{ $currentPlayer->name }}">{{ Str::limit($currentPlayer->name, 15, '') }}</span></p>
+                        class="font-bold text-violet-400 truncate max-w-[180px] inline-block align-bottom" title="{{ $currentPlayer->name }}">{{ Str::limit($currentPlayer->name, 25, '') }}</span></p>
 
                 <button x-show="status === 'waiting'" @click="leaveRoom" :disabled="loadingLeave || loadingStart"
                     class="text-red-400 hover:text-white transition text-xs font-bold border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/80 shadow-md disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
@@ -367,7 +367,7 @@
                                         </div>
                                     </template>
 
-                                    <span x-text="p.name.slice(0, 15)" class="truncate inline-block align-bottom" :title="p.name"
+                                    <span x-text="p.name.slice(0, 25)" class="truncate inline-block align-bottom" :title="p.name"
                                         :class="{'font-bold text-violet-300': p.id == currentPlayerId}"></span>
                                     <span x-show="p.is_host"
                                         class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded ml-1 shrink-0">Host</span>
@@ -464,7 +464,7 @@
                                         <button @click="executeUseCard(activeCardIdToUse, { target_player_id: p.id })"
                                             :disabled="isUsingCard"
                                             class="bg-slate-800/80 hover:bg-red-900/50 border border-slate-600 hover:border-red-500 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-between gap-3">
-                                            <span x-text="p.name.slice(0, 15)" class="truncate inline-block align-bottom" :title="p.name"></span>
+                                            <span x-text="p.name.slice(0, 25)" class="truncate inline-block align-bottom" :title="p.name"></span>
                                             <span class="text-xs text-slate-400 shrink-0">Pilih Target</span>
                                         </button>
                                     </template>
@@ -539,11 +539,11 @@
 
                     <h2 class="text-3xl font-extrabold mb-2 text-white">
                         <span x-show="currentTurn === currentPlayerId" class="text-green-400">It's Your Turn!</span>
-                        <span x-show="currentTurn !== currentPlayerId">Waiting for <span class="text-violet-400 truncate max-w-[120px] inline-block align-bottom"
-                                x-text="getCurrentPlayerName().slice(0, 15)" :title="getCurrentPlayerName()"></span>...</span>
+                        <span x-show="currentTurn !== currentPlayerId">Waiting for <span class="text-violet-400 truncate max-w-[200px] inline-block align-bottom"
+                                x-text="getCurrentPlayerName().slice(0, 25)" :title="getCurrentPlayerName()"></span>...</span>
                     </h2>
                     <p class="text-slate-400 mb-8" x-show="recentDice.length > 0">
-                        <span class="font-bold text-white truncate max-w-[120px] inline-block align-bottom" x-text="lastRollerName.slice(0, 15)" :title="lastRollerName"></span> just rolled a <span
+                        <span class="font-bold text-white truncate max-w-[200px] inline-block align-bottom" x-text="lastRollerName.slice(0, 25)" :title="lastRollerName"></span> just rolled a <span
                             class="font-bold text-yellow-400" x-text="recentDice.join(' & ')"></span>!
                     </p>
 
@@ -593,7 +593,7 @@
                                     <div class="flex items-center gap-3">
                                         <span class="text-2xl"
                                             x-text="index === 0 ? '👑' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : ''))"></span>
-                                        <span class="text-lg truncate max-w-[150px] inline-block align-bottom" x-text="bp.name.slice(0, 15)" :title="bp.name"></span>
+                                        <span class="text-lg truncate max-w-[220px] inline-block align-bottom" x-text="bp.name.slice(0, 25)" :title="bp.name"></span>
                                     </div>
                                     <div class="text-right">
                                         <div
