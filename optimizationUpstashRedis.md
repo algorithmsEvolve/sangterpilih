@@ -1,6 +1,6 @@
 # Panduan Migrasi & Optimasi Serverless dengan Upstash Redis
 
-Dokumen ini menjelaskan mengapa dan bagaimana cara memigrasikan "Number Battle" (Game Real-time) dari penyimpanan tradisional berbasis SQL ke **Upstash Redis** di atas arsitektur *Serverless Vercel*. Metode yang digunakan di sini adalah metode perpindahan paling aman: **Soft Deprecation (A/B Testing)**.
+Dokumen ini menjelaskan mengapa dan bagaimana cara memigrasikan "Sang Terpilih" (Game Real-time) dari penyimpanan tradisional berbasis SQL ke **Upstash Redis** di atas arsitektur *Serverless Vercel*. Metode yang digunakan di sini adalah metode perpindahan paling aman: **Soft Deprecation (A/B Testing)**.
 
 ---
 

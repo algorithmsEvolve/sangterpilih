@@ -9,6 +9,8 @@ Route::get('/', function () {
     $traps = config('cards.traps', []);
     return view('welcome', compact('spells', 'traps'));
 });
+Route::get('/rooms', [GameRedisController::class, 'roomsView']);
+Route::get('/rooms/list', [GameRedisController::class, 'roomsList']);
 
 // === RUTING MYSQL/SUPABASE (DITIDURKAN) ===
 // Route::post('/room/create', [GameController::class, 'createRoom']);

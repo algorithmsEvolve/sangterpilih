@@ -1,8 +1,8 @@
-# Ringkasan Proyek: Sang Terpilih (Number Battle)
+# Ringkasan Proyek: Sang Terpilih (Sang Terpilih)
 
 ## 📌 Tentang Aplikasi Ini
 
-**Sang Terpilih (Number Battle)** adalah sebuah permainan (game) multiplayer berbasis web yang berjalan secara *real-time*. Game ini mengusung genre *turn-based strategy* kasual di mana pemain berlomba mengumpulkan poin dan saling menjegal menggunakan kartu aksi.
+**Sang Terpilih (Sang Terpilih)** adalah sebuah permainan (game) multiplayer berbasis web yang berjalan secara *real-time*. Game ini mengusung genre *turn-based strategy* kasual di mana pemain berlomba mengumpulkan poin dan saling menjegal menggunakan kartu aksi.
 
 Dalam permainan ini, pemain tidak hanya mengandalkan keberuntungan dari lemparan dadu, tetapi juga strategi dalam mengelola sumber daya (poin) untuk membeli item (kartu Spell atau Trap) yang dapat memberikan keuntungan bagi diri sendiri atau memberikan kerugian bagi lawan.
 

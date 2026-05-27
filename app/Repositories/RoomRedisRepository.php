@@ -34,6 +34,46 @@ class RoomRedisRepository
     }
 
     /**
+     * Ambil ringkasan room yang masih bisa di-join.
+     */
+    public static function listAvailableRooms(): array
+    {
+        $keys = Redis::keys('*room:*') ?: [];
+        $rooms = [];
+
+        foreach ($keys as $key) {
+            $key = (string) $key;
+            $roomPos = strpos($key, 'room:');
+            if ($roomPos === false) {
+                continue;
+            }
+
+            $code = substr($key, $roomPos + strlen('room:'));
+            $room = self::getRoom($code);
+            if (!$room || ($room['status'] ?? null) !== 'waiting') {
+                continue;
+            }
+
+            $players = array_values($room['players'] ?? []);
+            $host = collect($players)->firstWhere('is_host', true);
+
+            $rooms[] = [
+                'code' => $room['code'],
+                'mode' => $room['mode'] ?? 'classic',
+                'status' => $room['status'],
+                'playerCount' => count($players),
+                'hostName' => $host['name'] ?? ($players[0]['name'] ?? '-'),
+            ];
+        }
+
+        usort($rooms, function ($a, $b) {
+            return strcmp($a['code'], $b['code']);
+        });
+
+        return $rooms;
+    }
+
+    /**
      * Helper: Format awal struktur Room baru.
      */
     public static function buildInitialRoom(string $code, string $hostId, string $hostName, string $mode = 'classic'): array

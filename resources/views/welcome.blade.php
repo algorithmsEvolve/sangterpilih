@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Battle - Enter the Arena</title>
+    <title>Sang Terpilih - Enter the Arena</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -118,18 +118,26 @@
         style="animation-delay: 2s;"></div>
 
     <div class="text-center mb-10 z-10">
-        <h1
-            class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500 drop-shadow-lg mb-4">
-            Number Battle</h1>
-        <p class="text-xl text-slate-300">Roll the dice, claim the highest score, and become the champion!</p>
+        <div class="flex items-center justify-center gap-4 mb-4">
+            <img src="{{ asset('images/sang-terpilih-imam.png') }}" alt="Ikon Sang Terpilih"
+                class="w-14 h-14 md:w-[72px] md:h-[72px] rounded-2xl object-cover border border-emerald-300/30 shadow-[0_0_28px_rgba(16,185,129,0.22)] bg-slate-900/60">
+            <h1
+                class="text-3xl md:text-[52px] font-extrabold leading-[1.25] pb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-cyan-200 to-amber-200 drop-shadow-lg">
+                Sang Terpilih</h1>
+        </div>
+        <p class="text-xl text-slate-300">Lempar dadumu, pasrahkan nasibmu, hindarilah tanggung jawab berat menjadi Imam!</p>
     </div>
 
-    <!-- View Cards Button -->
-    <div class="mb-10 z-10 w-full text-center">
+    <!-- Quick Actions -->
+    <div class="mb-10 z-10 w-full flex flex-col sm:flex-row items-center justify-center gap-3">
         <button @click="showCardsModal=true"
-            class="text-pink-400 hover:text-pink-300 font-semibold transition text-lg bg-slate-900/50 px-6 py-3 rounded-full border border-pink-500/30 hover:border-pink-500 hover:bg-slate-800/50 shadow-[0_0_15px_rgba(236,72,153,0.15)] hover:shadow-[0_0_25px_rgba(236,72,153,0.3)] flex items-center gap-2 mx-auto">
+            class="text-pink-400 hover:text-pink-300 font-semibold transition text-lg bg-slate-900/50 px-6 py-3 rounded-full border border-pink-500/30 hover:border-pink-500 hover:bg-slate-800/50 shadow-[0_0_15px_rgba(236,72,153,0.15)] hover:shadow-[0_0_25px_rgba(236,72,153,0.3)] flex items-center gap-2">
             <span>📖</span> Lihat Katalog Kartu
         </button>
+        <a href="/rooms"
+            class="text-cyan-300 hover:text-cyan-200 font-semibold transition text-lg bg-slate-900/50 px-6 py-3 rounded-full border border-cyan-400/30 hover:border-cyan-300 hover:bg-slate-800/50 shadow-[0_0_15px_rgba(34,211,238,0.12)] hover:shadow-[0_0_25px_rgba(34,211,238,0.25)] flex items-center gap-2">
+            <span>🕹️</span> Gabung Room
+        </a>
     </div>
 
     @if(session('error'))
@@ -173,25 +181,25 @@
     <div class="flex flex-col md:flex-row gap-8 z-10 w-full max-w-4xl justify-center">
         <!-- Create Room -->
         <div class="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl transition hover:border-pink-500/50">
-            <h2 class="text-2xl font-bold mb-6 text-pink-400">Create Room</h2>
+            <h2 class="text-2xl font-bold mb-6 text-pink-400">Buat Room</h2>
             <form action="/room/create" method="POST" class="space-y-4" @submit="formLoading = 'create'">
                 @csrf
                 <div>
-                    <label class="block text-sm text-slate-400 mb-1">Game Mode</label>
+                    <label class="block text-sm text-slate-400 mb-1">Mode Permainan</label>
                     <select name="mode"
                         class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none">
-                        <option value="classic">Classic (Point Race)</option>
                         <option value="survival">Survival (Sudden Death)</option>
+                        <option value="classic">Classic (Point Race)</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm text-slate-400 mb-1">Your Name</label>
+                    <label class="block text-sm text-slate-400 mb-1">Nama Kamu</label>
                     <input type="text" name="host_name" required
                         class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                         placeholder="e.g. Master">
                 </div>
                 <div>
-                    <label class="block text-sm text-slate-400 mb-1">Room Code/Password</label>
+                    <label class="block text-sm text-slate-400 mb-1">Kode Room</label>
                     <input type="text" name="code" required
                         class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                         placeholder="e.g. secret123">
@@ -199,32 +207,7 @@
                 <button type="submit" :disabled="formLoading !== null"
                     class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-pink-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                     <span x-show="formLoading === 'create'" class="nb-btn-spinner"></span>
-                    <span x-text="formLoading === 'create' ? 'Membuat…' : 'Create Room'"></span>
-                </button>
-            </form>
-        </div>
-
-        <!-- Join Room -->
-        <div class="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl transition hover:border-violet-500/50">
-            <h2 class="text-2xl font-bold mb-6 text-violet-400">Join Room</h2>
-            <form action="/room/join" method="POST" class="space-y-4" @submit="formLoading = 'join'">
-                @csrf
-                <div>
-                    <label class="block text-sm text-slate-400 mb-1">Your Name</label>
-                    <input type="text" name="player_name" required
-                        class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        placeholder="e.g. Challenger">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-400 mb-1">Room Code/Password</label>
-                    <input type="text" name="code" required
-                        class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        placeholder="e.g. secret123">
-                </div>
-                <button type="submit" :disabled="formLoading !== null"
-                    class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                    <span x-show="formLoading === 'join'" class="nb-btn-spinner"></span>
-                    <span x-text="formLoading === 'join' ? 'Joining…' : 'Join Room'"></span>
+                    <span x-text="formLoading === 'create' ? 'Membuat…' : 'Buat Room'"></span>
                 </button>
             </form>
         </div>

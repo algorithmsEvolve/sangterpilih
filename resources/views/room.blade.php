@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room {{ $room->code }} - Number Battle</title>
+    <title>Room {{ $room->code }} - Sang Terpilih</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
@@ -262,10 +262,90 @@
             animation: nb-burst 0.7s ease-out;
         }
 
+        .nb-roll-result-burst {
+            animation: nb-roll-result-burst 1.15s ease-out forwards;
+        }
+
+        @keyframes nb-roll-result-burst {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(.65);
+                filter: blur(6px);
+            }
+
+            18% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.24);
+                filter: blur(0);
+            }
+
+            45% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.12);
+            }
+        }
+
+        .nb-gameover-card {
+            animation: nb-gameover-card 0.75s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        @keyframes nb-gameover-card {
+            from {
+                opacity: 0;
+                transform: translateY(26px) scale(.92);
+                filter: blur(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
         .card-image,
         .card-image svg {
             width: 100%;
             height: 100%;
+            display: block;
+        }
+
+        .nb-card-icon-art {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.18), transparent 42%),
+                linear-gradient(135deg, rgba(15, 23, 42, 0.35), rgba(0, 0, 0, 0.9));
+            text-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
+            line-height: 1;
+        }
+
+        .nb-card-icon-art.spell {
+            color: #d1fae5;
+        }
+
+        .nb-card-icon-art.trap {
+            color: #fee2e2;
+        }
+
+        .nb-card-icon-art-sm {
+            font-size: 2.15rem;
+        }
+
+        .nb-card-icon-art-md {
+            font-size: 4.5rem;
+        }
+
+        .nb-card-icon-art-lg {
+            font-size: 5.25rem;
         }
     </style>
 </head>
@@ -308,14 +388,82 @@
         </div>
 
         <!-- Card Effect Announcement -->
-        <div x-show="effectNotice.show" x-cloak
-            class="fixed inset-0 z-[110] flex items-center justify-center pointer-events-none p-4">
-            <div class="nb-effect-burst max-w-md w-full rounded-2xl border px-6 py-5 text-center shadow-2xl backdrop-blur-sm"
-                :class="effectNotice.type === 'trap' ? 'bg-red-900/80 border-red-400/60 text-red-100' : 'bg-emerald-900/80 border-emerald-400/60 text-emerald-100'">
-                <p class="text-xs uppercase tracking-wide opacity-80"
-                    x-text="effectNotice.type === 'trap' ? 'Trap Activated' : 'Spell Activated'"></p>
-                <h4 class="text-2xl font-extrabold mt-1" x-text="effectNotice.cardName"></h4>
-                <p class="text-sm mt-2" x-text="effectNotice.message"></p>
+        <div x-show="effectNotice.show" x-cloak @click.self="closeEffectNotice()"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[155] flex items-center justify-center p-4 bg-slate-950/55 backdrop-blur-sm">
+            <div class="nb-effect-burst max-w-2xl w-full rounded-3xl border p-5 md:p-6 shadow-2xl backdrop-blur-md overflow-hidden relative"
+                :class="effectNotice.type === 'trap'
+                    ? 'bg-gradient-to-br from-red-950/95 via-slate-950/95 to-red-900/80 border-red-400/60 text-red-50 shadow-red-900/30'
+                    : 'bg-gradient-to-br from-emerald-950/95 via-slate-950/95 to-teal-900/80 border-emerald-400/60 text-emerald-50 shadow-emerald-900/30'">
+                <div class="absolute inset-x-0 top-0 h-1"
+                    :class="effectNotice.type === 'trap' ? 'bg-red-400' : 'bg-emerald-400'"></div>
+
+                <button type="button" @click="closeEffectNotice()"
+                    class="absolute right-4 top-4 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-white/80 hover:bg-white/20 hover:text-white transition">
+                    Tutup
+                </button>
+
+                <div class="flex items-start gap-4 pr-16">
+                    <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border text-3xl shadow-lg"
+                        :class="effectNotice.type === 'trap'
+                            ? 'border-red-300/50 bg-red-500/20 text-red-100'
+                            : 'border-emerald-300/50 bg-emerald-500/20 text-emerald-100'"
+                        x-text="effectNotice.icon"></div>
+                    <div class="min-w-0">
+                        <p class="text-xs uppercase tracking-[0.24em] font-black opacity-80"
+                            x-text="effectNotice.type === 'trap' ? 'Trap Activated' : 'Spell Activated'"></p>
+                        <h4 class="text-3xl md:text-4xl font-black leading-tight mt-1" x-text="effectNotice.cardName"></h4>
+                        <p class="text-sm mt-2 opacity-80" x-text="effectNotice.cardDescription"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-5">
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1">Diaktifkan oleh</p>
+                        <p class="text-lg font-black truncate" x-text="effectNotice.usedByName"></p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1">Target efek</p>
+                        <p class="text-lg font-black truncate" x-text="effectNotice.targetName"></p>
+                        <p x-show="effectNotice.isRandom" class="text-xs mt-1 text-yellow-200 font-bold">Target dipilih acak</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
+                    <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2">Detail efek</p>
+                    <p class="text-base md:text-lg font-bold leading-relaxed" x-text="effectNotice.message"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Reveal -->
+        <div x-show="gameOverSequence.spotlight" x-cloak
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[158] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div class="nb-gameover-card w-full max-w-3xl rounded-3xl border border-yellow-300/40 bg-gradient-to-br from-slate-950 via-violet-950 to-slate-900 p-6 md:p-8 text-center shadow-[0_0_80px_rgba(250,204,21,0.25)]">
+                <p class="text-xs uppercase tracking-[0.35em] text-yellow-200 font-black mb-3">Survival Result</p>
+                <h2 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-400 to-pink-400 mb-7">
+                    Duel Selesai!
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="rounded-2xl border border-yellow-300/40 bg-yellow-300/10 p-5">
+                        <p class="text-xs uppercase tracking-[0.2em] text-yellow-200 mb-2">Pemenang</p>
+                        <div class="text-5xl mb-2">👑</div>
+                        <p class="text-3xl font-black text-yellow-200 truncate" x-text="gameOverSequence.winner?.name || '-'"></p>
+                        <p class="text-sm text-yellow-100/80 mt-1">LP akhir: <span class="font-mono font-bold" x-text="formatScore(gameOverSequence.winner?.score || 0)"></span></p>
+                    </div>
+                    <div class="rounded-2xl border border-red-300/40 bg-red-500/10 p-5">
+                        <p class="text-xs uppercase tracking-[0.2em] text-red-200 mb-2">Terbawah</p>
+                        <div class="text-5xl mb-2">💥</div>
+                        <p class="text-3xl font-black text-red-100 truncate" x-text="gameOverSequence.loser?.name || '-'"></p>
+                        <p class="text-sm text-red-100/80 mt-1">LP akhir: <span class="font-mono font-bold" x-text="formatScore(gameOverSequence.loser?.score || 0)"></span></p>
+                    </div>
+                </div>
+                <p class="text-slate-300 mt-6 text-sm">Leaderboard lengkap segera ditampilkan...</p>
             </div>
         </div>
 
@@ -324,7 +472,7 @@
             <div>
                 <h1
                     class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">
-                    Number Battle @hasSection('mode_name')<span class="text-xl ml-2 text-pink-300">-
+                    Sang Terpilih @hasSection('mode_name')<span class="text-xl ml-2 text-pink-300">-
                     @yield('mode_name')</span>@endif</h1>
                 <button @click="showHistoryModal = true"
                     class="mt-2 text-xs bg-slate-800/70 border border-violet-400/30 hover:border-violet-300 hover:bg-slate-700/70 px-3 py-1.5 rounded-full text-violet-200 transition">
@@ -359,7 +507,7 @@
                                 <div class="flex items-center gap-2 relative min-w-0">
                                     <span class="w-3 h-3 rounded-full shrink-0"
                                         :class="p.id === currentTurn && status === 'playing' ? 'bg-green-400 animate-pulse' : 'bg-slate-600'"></span>
-                                    
+
                                     <!-- Trap Countdown Icon -->
                                     <template x-if="getTrapTurns(p) > 0">
                                         <div class="flex items-center justify-center w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold border border-red-400 shadow-[0_0_8px_rgba(220,38,38,0.5)] animate-bounce shrink-0" title="Trap is going to affect this player!">
@@ -381,8 +529,13 @@
                             <div class="text-right">
                                 <div class="text-[10px] text-slate-400 font-normal uppercase tracking-wider mb-0.5">
                                     @yield('score_label', 'Score')</div>
-                                <div class="font-bold text-amber-400 leading-none"
-                                    x-text="status !== 'waiting' ? p.score : '-'"></div>
+                                <div class="font-bold leading-none font-mono tabular-nums transition-colors"
+                                    :class="p.scoreDelta < 0 ? 'text-red-300' : (p.scoreDelta > 0 ? 'text-emerald-300' : 'text-amber-400')"
+                                    x-text="status !== 'waiting' ? formatScore(p.displayScore ?? p.score) : '-'"></div>
+                                <div x-show="status !== 'waiting' && p.scoreDelta !== 0" x-transition
+                                    class="text-[10px] font-bold font-mono mt-1"
+                                    :class="p.scoreDelta < 0 ? 'text-red-400' : 'text-emerald-400'"
+                                    x-text="(p.scoreDelta > 0 ? '+' : '') + formatScore(p.scoreDelta)"></div>
                             </div>
                         </li>
                     </template>
@@ -492,11 +645,17 @@
                     </div>
 
                     <div class="mb-12 mt-4 flex justify-center gap-6">
-                        <template x-for="(diceVal, idx) in recentDice" :key="idx">
+                        <div x-show="rollResultNotice.show" x-cloak
+                            class="nb-roll-result-burst pointer-events-none absolute left-1/2 top-[38%] z-20 text-center">
+                            <p class="text-xs uppercase tracking-[0.3em] text-yellow-200 font-black drop-shadow-lg">Rolled</p>
+                            <div class="text-7xl md:text-8xl font-black text-yellow-300 drop-shadow-[0_0_26px_rgba(250,204,21,0.75)]"
+                                x-text="rollResultNotice.value"></div>
+                        </div>
+                        <template x-for="(diceVal, idx) in visibleDiceValues()" :key="idx">
                             <div class="scene">
                                 <!-- Alpine classes apply the 3D rotation logic -->
                                 <div class="dice" :class="[
-                                    isAnimating ? 'rolling' : '', 
+                                    isAnimating ? 'rolling' : '',
                                     diceVal > 0 && !isAnimating ? 'show-' + diceVal : 'show-1'
                                 ]">
                                     <div class="dice-face face-1">
@@ -542,13 +701,13 @@
                         <span x-show="currentTurn !== currentPlayerId">Waiting for <span class="text-violet-400 truncate max-w-[200px] inline-block align-bottom"
                                 x-text="getCurrentPlayerName().slice(0, 25)" :title="getCurrentPlayerName()"></span>...</span>
                     </h2>
-                    <p class="text-slate-400 mb-8" x-show="recentDice.length > 0">
+                    <p class="text-slate-400 mb-8" x-show="hasLastRoll()">
                         <span class="font-bold text-white truncate max-w-[200px] inline-block align-bottom" x-text="lastRollerName.slice(0, 25)" :title="lastRollerName"></span> just rolled a <span
                             class="font-bold text-yellow-400" x-text="recentDice.join(' & ')"></span>!
                     </p>
 
                     <div class="flex gap-3 mb-4">
-                        <button @click="showShopModal = true"
+                        <button x-show="mode !== 'survival'" @click="showShopModal = true"
                             class="px-5 py-2 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-400/25 text-indigo-100 text-sm font-bold transition">
                             Shop
                         </button>
@@ -656,7 +815,7 @@
                                 <span x-text="card.name" class="truncate max-w-[100%]"></span>
                             </div>
                             <div class="nb-card-art h-[50px] mb-2"><span class="card-image"
-                                    x-html="card.image_url"></span></div>
+                                    x-html="cardArtHtml(card, 'sm')"></span></div>
                             <div
                                 class="nb-card-desc-box mt-0 p-1.5 h-[65px] overflow-hidden flex items-center justify-center text-center">
                                 <p class="text-[9px] text-slate-200 leading-tight" x-text="card.description"></p>
@@ -678,7 +837,7 @@
                 x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
                 x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
                 <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-2xl font-bold text-slate-100">Inventory Lo Doang</h3>
+                    <h3 class="text-2xl font-bold text-slate-100">Inventory</h3>
                     <button @click="showInventoryModal = false" class="text-slate-300 hover:text-white">Tutup</button>
                 </div>
                 <div
@@ -706,7 +865,7 @@
                                     class="truncate max-w-[100%]"></span>
                             </div>
                             <div class="nb-card-art h-[50px] mb-2"><span class="card-image"
-                                    x-html="(cardCatalog.find(c => c.id === cid) || {}).image_url"></span></div>
+                                    x-html="cardArtHtml(cardCatalog.find(c => c.id === cid) || {}, 'sm')"></span></div>
                             <div
                                 class="nb-card-desc-box mt-0 p-1.5 h-[65px] overflow-hidden flex items-center justify-center text-center">
                                 <p class="text-[9px] text-slate-200 leading-tight"
@@ -746,97 +905,134 @@
         <div x-show="status === 'selecting_cards'" x-cloak
             class="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-xl">
             <div
-                class="w-full max-w-4xl h-full max-h-[90vh] flex flex-col glass-panel rounded-3xl p-6 border border-emerald-500/30 shadow-[0_0_80px_rgba(16,185,129,0.15)] relative">
+                class="w-full max-w-7xl h-full max-h-[92vh] flex flex-col glass-panel rounded-3xl p-6 border border-emerald-500/30 shadow-[0_0_80px_rgba(16,185,129,0.15)] relative">
 
-                <div class="text-center mb-6">
-                    <h2
-                        class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-2">
-                        Pilih Loadout Kartu</h2>
-                    <p class="text-slate-300">Waktu tersisa: <span class="font-mono text-2xl font-bold text-yellow-400"
-                            x-text="loadoutTimeLeft"></span> detik</p>
-                    <p class="text-sm text-slate-400 mt-1">Pilih maksimal <span class="text-emerald-300 font-bold">2
-                            Spell</span> dan <span class="text-red-300 font-bold">2 Trap</span> untuk bertahan hidup.
-                    </p>
-                </div>
-
-                <div class="flex-1 overflow-y-auto pr-2 flex flex-col gap-4">
-                    <!-- Spells -->
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                     <div>
-                        <h3
-                            class="text-lg font-bold text-emerald-400 mb-2 sticky top-0 bg-slate-900/80 backdrop-blur py-1 z-10 border-b border-emerald-500/20">
-                            Spells (Pilih <span x-text="selectedSpells.length"></span>/2)</h3>
-                        <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
-                            <template x-for="card in cardCatalog.filter(c => c.type === 'spell' && !['multiplier', 'skip_si'].includes(c.id))" :key="card.id">
-                                <div @click="!card.not_available && toggleLoadoutCard(card)"
-                                    class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
-                                    :class="[
-                                        'spell',
-                                        selectedSpells.includes(card.id) ? 'ring-2 ring-emerald-400 transform scale-[1.05] bg-emerald-900/50' : 'hover:border-emerald-400/50',
-                                        (selectedSpells.length >= 2 && !selectedSpells.includes(card.id)) ? 'opacity-50 grayscale' : '',
-                                        card.not_available ? 'opacity-45 grayscale cursor-not-allowed hover:border-transparent' : ''
-                                     ]">
-                                    <div x-show="card.not_available" class="absolute inset-0 pointer-events-none overflow-hidden rounded-[10px] z-20">
-                                        <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
-                                    </div>
-                                    <div
-                                        class="flex items-center justify-between text-[8px] font-black mb-1 text-slate-100">
-                                        <span x-text="card.name" class="truncate max-w-[80%]"></span>
-                                        <span x-show="selectedSpells.includes(card.id)"
-                                            class="text-emerald-400 text-xs">✓</span>
-                                    </div>
-                                    <div class="nb-card-art h-[35px] mb-1"><span class="card-image"
-                                            x-html="card.image_url"></span></div>
-                                    <div class="nb-card-desc-box mt-0 p-1 h-[45px] overflow-hidden">
-                                        <p class="text-[7px] text-slate-200 leading-tight" x-text="card.description">
-                                        </p>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
+                        <h2
+                            class="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-2">
+                            Pilih Loadout Kartu</h2>
+                        <p class="text-sm text-slate-400">Pilih maksimal <span class="text-emerald-300 font-bold">2
+                                Spell</span> dan <span class="text-red-300 font-bold">2 Trap</span>. Klik kartu untuk
+                            melihat preview, lalu tekan tombol pilih.</p>
                     </div>
-
-                    <!-- Traps -->
-                    <div>
-                        <h3
-                            class="text-lg font-bold text-red-400 mb-2 sticky top-0 bg-slate-900/80 backdrop-blur py-1 z-10 border-b border-red-500/20">
-                            Traps (Pilih <span x-text="selectedTraps.length"></span>/2)</h3>
-                        <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
-                            <template x-for="card in cardCatalog.filter(c => c.type === 'trap' && !['multiplier', 'skip_si'].includes(c.id))" :key="card.id">
-                                <div @click="!card.not_available && toggleLoadoutCard(card)"
-                                    class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[100px] p-1.5"
-                                    :class="[
-                                        'trap',
-                                        selectedTraps.includes(card.id) ? 'ring-2 ring-red-400 transform scale-[1.05] bg-red-900/50' : 'hover:border-red-400/50',
-                                        (selectedTraps.length >= 2 && !selectedTraps.includes(card.id)) ? 'opacity-50 grayscale' : '',
-                                        card.not_available ? 'opacity-45 grayscale cursor-not-allowed hover:border-transparent' : ''
-                                     ]">
-                                    <div x-show="card.not_available" class="absolute inset-0 pointer-events-none overflow-hidden rounded-[10px] z-20">
-                                        <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
-                                    </div>
-                                    <div
-                                        class="flex items-center justify-between text-[8px] font-black mb-1 text-slate-100">
-                                        <span x-text="card.name" class="truncate max-w-[80%]"></span>
-                                        <span x-show="selectedTraps.includes(card.id)"
-                                            class="text-red-400 text-xs">✓</span>
-                                    </div>
-                                    <div class="nb-card-art h-[35px] mb-1"><span class="card-image"
-                                            x-html="card.image_url"></span></div>
-                                    <div class="nb-card-desc-box mt-0 p-1 h-[45px] overflow-hidden">
-                                        <p class="text-[7px] text-slate-200 leading-tight" x-text="card.description">
-                                        </p>
-                                    </div>
-                                </div>
-                            </template>
+                    <div class="flex flex-col sm:flex-row md:flex-col xl:flex-row items-stretch sm:items-center md:items-stretch xl:items-center gap-3">
+                        <div class="rounded-2xl border border-yellow-400/30 bg-yellow-500/10 px-5 py-3 text-right">
+                            <p class="text-xs uppercase tracking-[0.2em] text-yellow-200">Waktu tersisa</p>
+                            <p class="font-mono text-3xl font-bold text-yellow-300" x-text="formattedLoadoutTime()"></p>
                         </div>
+                        <button @click="submitLoadout" :disabled="hasSelectedCards || isSubmittingLoadout"
+                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-8 py-4 rounded-xl font-bold text-base shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span
+                                x-text="hasSelectedCards ? 'Menunggu...' : (isSubmittingLoadout ? 'Menyimpan...' : 'KUNCI LOADOUT')"></span>
+                        </button>
                     </div>
                 </div>
 
-                <div class="mt-6 text-center border-t border-white/10 pt-4">
-                    <button @click="submitLoadout" :disabled="hasSelectedCards || isSubmittingLoadout"
-                        class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-12 py-4 rounded-xl font-bold text-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span
-                            x-text="hasSelectedCards ? 'Menunggu Pemain Lain...' : (isSubmittingLoadout ? 'Menyimpan...' : 'KUNCI LOADOUT')"></span>
-                    </button>
+                <div class="flex flex-col lg:flex-row gap-5 min-h-0 flex-1">
+                    <div class="lg:w-2/3 min-h-0 flex flex-col rounded-2xl border border-white/10 bg-slate-950/35 overflow-hidden">
+                        <div class="flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950/60 p-3">
+                            <div class="inline-flex rounded-xl border border-white/10 bg-slate-900/80 p-1">
+                                <button type="button" @click="loadoutTab = 'spell'; previewFirstLoadoutCard()"
+                                    class="px-4 py-2 rounded-lg text-sm font-bold transition"
+                                    :class="loadoutTab === 'spell' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-300 hover:text-white'">
+                                    Spell <span class="ml-1" x-text="'(' + selectedSpells.length + '/2)'"></span>
+                                </button>
+                                <button type="button" @click="loadoutTab = 'trap'; previewFirstLoadoutCard()"
+                                    class="px-4 py-2 rounded-lg text-sm font-bold transition"
+                                    :class="loadoutTab === 'trap' ? 'bg-red-500 text-white shadow-lg' : 'text-slate-300 hover:text-white'">
+                                    Trap <span class="ml-1" x-text="'(' + selectedTraps.length + '/2)'"></span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-400 hidden sm:block">Kartu terpilih: <span
+                                    class="text-emerald-300 font-bold" x-text="selectedSpells.length"></span> spell,
+                                <span class="text-red-300 font-bold" x-text="selectedTraps.length"></span> trap</p>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                                <template x-for="card in loadoutCards()" :key="card.id">
+                                    <button type="button" @click="previewLoadoutCard(card)"
+                                        class="nb-card-shell text-left cursor-pointer transition-all duration-200 min-h-[250px] p-3 hover:-translate-y-1"
+                                        :class="[
+                                            card.type === 'trap' ? 'trap' : 'spell',
+                                            previewLoadoutCardId === card.id ? 'ring-4 ring-white/70' : '',
+                                            isLoadoutSelected(card) ? (card.type === 'trap' ? 'ring-2 ring-red-300 bg-red-900/60' : 'ring-2 ring-emerald-300 bg-emerald-900/60') : '',
+                                            !canSelectLoadoutCard(card) && !isLoadoutSelected(card) ? 'opacity-50 grayscale' : '',
+                                            card.not_available ? 'opacity-45 grayscale cursor-not-allowed hover:translate-y-0' : ''
+                                        ]">
+                                        <div x-show="card.not_available"
+                                            class="absolute inset-0 pointer-events-none overflow-hidden rounded-[10px] z-20">
+                                            <div class="absolute top-1/2 left-[-20%] w-[140%] border-t-4 border-white/90 -rotate-12"></div>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2 text-sm font-black mb-2 text-slate-100">
+                                            <span x-text="card.name" class="truncate"></span>
+                                            <span x-show="isLoadoutSelected(card)"
+                                                :class="card.type === 'trap' ? 'text-red-200' : 'text-emerald-200'">✓</span>
+                                        </div>
+                                        <div class="nb-card-art h-[115px] mb-3"><span class="card-image"
+                                                x-html="cardArtHtml(card, 'md')"></span></div>
+                                        <div class="nb-card-desc-box mt-0 p-2 h-[90px] overflow-hidden">
+                                            <p class="text-xs text-slate-200 leading-snug" x-text="card.description"></p>
+                                        </div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="lg:w-1/3 rounded-2xl border border-white/10 bg-slate-950/45 p-5 min-h-[420px] max-h-full overflow-y-auto flex flex-col">
+                        <template x-if="selectedLoadoutCard()">
+                            <div class="flex flex-col min-h-0 flex-1">
+                                <div class="flex items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-[0.2em]"
+                                            :class="selectedLoadoutCard().type === 'trap' ? 'text-red-300' : 'text-emerald-300'"
+                                            x-text="selectedLoadoutCard().type === 'trap' ? 'Trap' : 'Spell'"></p>
+                                        <h3 class="text-2xl font-extrabold text-white leading-tight"
+                                            x-text="selectedLoadoutCard().name"></h3>
+                                    </div>
+                                    <span x-show="isLoadoutSelected(selectedLoadoutCard())"
+                                        class="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white">Dipilih</span>
+                                </div>
+
+                                <div class="nb-card-shell mx-auto w-full max-w-[240px] p-4 mb-5"
+                                    :class="selectedLoadoutCard().type === 'trap' ? 'trap' : 'spell'">
+                                    <div class="flex items-center justify-between text-base font-black mb-3 text-slate-100">
+                                        <span x-text="selectedLoadoutCard().name" class="truncate"></span>
+                                    </div>
+                                    <div class="nb-card-art h-[135px] mb-3"><span class="card-image"
+                                            x-html="cardArtHtml(selectedLoadoutCard(), 'lg')"></span></div>
+                                    <div class="nb-card-desc-box mt-0 p-3 min-h-[95px]">
+                                        <p class="text-xs text-slate-100 leading-relaxed"
+                                            x-text="selectedLoadoutCard().description"></p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-auto space-y-3">
+                                    <button type="button" @click="selectPreviewCard()"
+                                        :disabled="hasSelectedCards || selectedLoadoutCard().not_available || (!isLoadoutSelected(selectedLoadoutCard()) && !canSelectLoadoutCard(selectedLoadoutCard()))"
+                                        class="w-full rounded-xl px-5 py-3 font-bold text-white shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :class="selectedLoadoutCard().type === 'trap'
+                                            ? 'bg-red-600 hover:bg-red-500'
+                                            : 'bg-emerald-600 hover:bg-emerald-500'"
+                                        x-text="isLoadoutSelected(selectedLoadoutCard()) ? 'Batalkan Pilihan' : 'Pilih Kartu Ini'"></button>
+                                    <p class="text-xs text-slate-400 text-center"
+                                        x-text="selectedLoadoutCard().type === 'trap' ? 'Trap terpilih ' + selectedTraps.length + '/2' : 'Spell terpilih ' + selectedSpells.length + '/2'"></p>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="!selectedLoadoutCard()">
+                            <div class="flex flex-1 items-center justify-center text-center text-slate-400">
+                                <p>Pilih salah satu kartu untuk melihat preview.</p>
+                            </div>
+                        </template>
+                    </aside>
+                </div>
+
+                <div class="mt-5 flex items-center justify-center border-t border-white/10 pt-4 text-center">
+                    <p class="text-sm text-slate-400">Game akan otomatis dimulai saat semua pemain mengunci loadout atau waktu habis.</p>
                 </div>
             </div>
         </div>
@@ -885,6 +1081,7 @@
         function gameClient() {
             return {
                 roomCode: '{{ $room->code }}',
+                mode: @json($room->mode ?? 'classic'),
                 status: '{{ $room->status }}',
                 // Versi Supabase/DB Lama:
                 // currentPlayerId: {{ $currentPlayer->id }},
@@ -900,6 +1097,9 @@
                 players: (@json($playersPublic)).map((p) => ({
                     ...p,
                     hasRolledThisTurn: !!p.has_rolled_this_turn,
+                    displayScore: Number(p.score || 0),
+                    scoreDelta: 0,
+                    scoreAnimationFrame: null,
                 })),
 
                 getTrapTurns(player) {
@@ -912,9 +1112,9 @@
                             if (t < minTurns) minTurns = t;
                             found = true;
                         } else if ([
-                            'curse_heavy_bones', 
-                            'forced_reroll', 
-                            'reverse_fortune', 
+                            'curse_heavy_bones',
+                            'forced_reroll',
+                            'reverse_fortune',
                             'sabotaged',
                             'blindfold'
                         ].includes(buff)) {
@@ -926,9 +1126,23 @@
                 },
 
                 myInventory: @json($myInventory ?? []),
-                recentDice: @json($room->last_dice_result ?? [0]),
+                recentDice: @json($room->last_dice_result ?? []),
                 lastRollerName: @json($room->last_roller_name ?? ''),
+                rollResultNotice: {
+                    show: false,
+                    value: '',
+                    timeout: null
+                },
                 leaderboard: [],
+                gameOverSequence: {
+                    pending: false,
+                    spotlight: false,
+                    showLeaderboard: false,
+                    leaderboard: [],
+                    winner: null,
+                    loser: null,
+                    timeout: null
+                },
                 cardCatalog: @json($cardCatalog ?? []),
                 showKickModal: false,
                 showHistoryModal: false,
@@ -941,6 +1155,10 @@
                 loadingLeave: false,
                 isRolling: false,
                 isAnimating: false,
+                pendingRollPlayers: null,
+                pendingEffectPlayers: null,
+                pendingEffectFlushTimeout: null,
+                deferCardEffectPlayerSync: false,
                 isEndingTurn: false,
                 isBuyingCard: false,
                 isUsingCard: false,
@@ -954,18 +1172,27 @@
                 trapTargetPlayerId: @json($room->trap_target_player_id ?? null),
                 isSkippingTrap: false,
                 isSubmittingLoadout: false,
-                selectionEndTime: null,
-                loadoutTimeLeft: 30,
+                selectionEndTime: @json($room->selection_end_time ?? null),
+                serverTimeOffset: (@json(time())) - Math.floor(Date.now() / 1000),
+                loadoutTimeLeft: 120,
                 selectedSpells: [],
                 selectedTraps: [],
                 hasSelectedCards: false,
                 loadoutTimer: null,
+                loadoutAutoSubmitted: false,
+                loadoutTab: 'spell',
+                previewLoadoutCardId: null,
                 actionHistory: [],
                 effectNotice: {
                     show: false,
                     type: 'spell',
+                    icon: '✦',
                     cardName: '',
+                    cardDescription: '',
                     message: '',
+                    usedByName: '',
+                    targetName: '',
+                    isRandom: false,
                     timeout: null
                 },
                 toast: {
@@ -1004,29 +1231,23 @@
                         .listen('CardEffectUsed', (e) => {
                             const p = e.payload || {};
                             let msg = p.note || (p.cardType === 'trap' ? 'Seseorang memakai trap!' : 'Seseorang memakai spell!');
-                            
+
                             if (p.isRandom) {
-                                msg = '🎲 [Target Acak] ' + msg;
+                                msg = '[Target Acak] ' + msg;
                             }
 
-                            this.showEffectNotice(
-                                p.cardType || 'spell',
-                                p.cardName || 'Kartu',
-                                msg
-                            );
+                            this.showEffectNotice(p, msg);
                             // Store exactly the same message shown in effect notice.
                             this.pushAction(msg, p.cardType || 'spell');
                         })
                         .listen('GameOver', (e) => {
-                            this.status = 'finished';
-                            this.leaderboard = e.leaderboard;
-                            this.triggerFireworks();
+                            this.prepareGameOver(e.leaderboard || []);
                         })
                         .listen('RoomClosed', () => {
                             this.showKickModal = true;
                             setTimeout(() => {
                                 window.location.href = '/';
-                            }, 5000);
+                            }, 4000);
                         })
                         .listen('PlayerLeft', (e) => {
                             this.players = this.players.filter(p => p.id !== e.playerId);
@@ -1042,11 +1263,24 @@
 
 
                     // Trap modal is toggled by reactive status change
+                    if (this.status === 'selecting_cards' && this.selectionEndTime) {
+                        this.syncSelectedLoadoutFromInventory();
+                        this.startLoadoutTimer();
+                        this.previewFirstLoadoutCard();
+                    }
                 },
 
                 applyState(state) {
                     if (!state) return;
-                    this.status = state.status;
+                    this.mode = state.mode || this.mode;
+                    const incomingStatus = state.status;
+                    if (incomingStatus === 'finished' && !this.gameOverSequence.showLeaderboard) {
+                        if (!this.gameOverSequence.pending) {
+                            this.prepareGameOver([...(state.players || [])].sort((a, b) => Number(b.score || 0) - Number(a.score || 0)));
+                        }
+                    } else {
+                        this.status = incomingStatus;
+                    }
                     this.currentTurn = state.currentTurn;
                     this.currentRound = state.currentRound;
                     this.totalRounds = state.totalRounds;
@@ -1054,26 +1288,39 @@
                     this.turnMultiplierPlayerId = state.turnMultiplierPlayerId;
                     this.pendingTrapConfirmations = state.pendingTrapConfirmations ?? [];
                     this.trapTargetPlayerId = state.trapTargetPlayerId;
-                    this.players = state.players ?? this.players;
-                    this.lastRollerName = state.lastRollerName || '';
+                    if (this.isRolling || this.isAnimating) {
+                        this.pendingRollPlayers = state.players ?? this.pendingRollPlayers;
+                    } else if (this.effectNotice.show || this.deferCardEffectPlayerSync) {
+                        this.pendingEffectPlayers = state.players ?? this.pendingEffectPlayers;
+                    } else {
+                        this.syncPlayers(state.players ?? this.players);
+                    }
                     this.selectionEndTime = state.selectionEndTime ?? this.selectionEndTime;
+                    if (state.serverTime) {
+                        this.serverTimeOffset = state.serverTime - Math.floor(Date.now() / 1000);
+                    }
 
                     const me = this.me();
                     if (me) {
                         this.hasSelectedCards = me.has_selected_cards;
                     }
 
-                    if (!this.isAnimating) {
+                    if (!this.isAnimating && !this.isRolling) {
+                        this.lastRollerName = state.lastRollerName || '';
                         let dr = state.lastDiceResult;
                         if (dr !== null && dr !== undefined) {
                             this.recentDice = Array.isArray(dr) ? dr : [dr];
                         } else {
-                            this.recentDice = [0];
+                            this.recentDice = [];
                         }
                     }
 
                     if (this.status === 'selecting_cards' && this.selectionEndTime) {
+                        this.syncSelectedLoadoutFromInventory();
                         this.startLoadoutTimer();
+                        if (!this.selectedLoadoutCard()) {
+                            this.previewFirstLoadoutCard();
+                        }
                     }
                 },
 
@@ -1082,6 +1329,38 @@
                     canvas.classList.remove('opacity-0');
                     document.body.classList.add('bg-gradient-to-r', 'from-amber-500', 'to-red-600', 'animate-pulse');
                     setTimeout(() => document.body.classList.remove('animate-pulse'), 5000);
+                },
+
+                prepareGameOver(leaderboard) {
+                    const sorted = [...(leaderboard || [])].sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+                    if (sorted.length === 0) return;
+
+                    this.gameOverSequence.pending = true;
+                    this.gameOverSequence.showLeaderboard = false;
+                    this.gameOverSequence.leaderboard = sorted;
+                    this.gameOverSequence.winner = sorted[0] || null;
+                    this.gameOverSequence.loser = sorted[sorted.length - 1] || null;
+
+                    if (this.gameOverSequence.timeout) {
+                        clearTimeout(this.gameOverSequence.timeout);
+                    }
+
+                    this.gameOverSequence.timeout = setTimeout(() => {
+                        this.revealGameOver();
+                    }, 4300);
+                },
+
+                revealGameOver() {
+                    this.gameOverSequence.pending = false;
+                    this.gameOverSequence.spotlight = true;
+                    this.triggerFireworks();
+
+                    setTimeout(() => {
+                        this.leaderboard = this.gameOverSequence.leaderboard;
+                        this.gameOverSequence.showLeaderboard = true;
+                        this.status = 'finished';
+                        this.gameOverSequence.spotlight = false;
+                    }, 3200);
                 },
 
                 getCurrentPlayerName() {
@@ -1123,6 +1402,113 @@
                 nameById(playerId) {
                     const player = this.players.find((p) => p.id === playerId);
                     return player ? player.name : null;
+                },
+
+                hasLastRoll() {
+                    return !this.isAnimating && !!this.lastRollerName && this.recentDice.some((value) => Number(value) > 0);
+                },
+
+                visibleDiceValues() {
+                    const values = Array.isArray(this.recentDice) ? this.recentDice : [];
+                    return values.length > 0 ? values : [1];
+                },
+
+                escapeHtml(value) {
+                    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#039;',
+                    }[char]));
+                },
+
+                cardArtHtml(card, size = 'md') {
+                    if (card && card.image_url) {
+                        return card.image_url;
+                    }
+
+                    const type = card?.type === 'trap' ? 'trap' : 'spell';
+                    const safeSize = ['sm', 'md', 'lg'].includes(size) ? size : 'md';
+                    const icon = this.escapeHtml(card?.icon || (type === 'trap' ? '☠️' : '✦'));
+
+                    return `<span class="nb-card-icon-art nb-card-icon-art-${safeSize} ${type}"><span>${icon}</span></span>`;
+                },
+
+                formatScore(value) {
+                    return Math.round(Number(value || 0)).toLocaleString('id-ID');
+                },
+
+                syncPlayers(nextPlayers) {
+                    const previousById = Object.fromEntries(this.players.map((player) => [player.id, player]));
+
+                    this.players = (nextPlayers || []).map((nextPlayer) => {
+                        const previous = previousById[nextPlayer.id];
+                        const nextScore = Number(nextPlayer.score || 0);
+
+                        if (!previous) {
+                            return {
+                                ...nextPlayer,
+                                hasRolledThisTurn: !!(nextPlayer.hasRolledThisTurn ?? nextPlayer.has_rolled_this_turn),
+                                displayScore: nextScore,
+                                scoreDelta: 0,
+                                scoreAnimationFrame: null,
+                            };
+                        }
+
+                        const previousScore = Number(previous.score || 0);
+                        const hasRunningAnimation = !!previous.scoreAnimationFrame;
+
+                        Object.assign(previous, nextPlayer, {
+                            hasRolledThisTurn: !!(nextPlayer.hasRolledThisTurn ?? nextPlayer.has_rolled_this_turn),
+                            score: nextScore,
+                        });
+
+                        if (previousScore !== nextScore) {
+                            this.animatePlayerScore(previous, nextScore);
+                        } else if (!hasRunningAnimation && Number(previous.displayScore ?? nextScore) !== nextScore) {
+                            this.animatePlayerScore(previous, nextScore);
+                        }
+
+                        return previous;
+                    });
+                },
+
+                animatePlayerScore(player, targetScore) {
+                    const startScore = Number(player.displayScore ?? player.score ?? 0);
+                    const endScore = Number(targetScore || 0);
+                    const delta = endScore - startScore;
+
+                    if (player.scoreAnimationFrame) {
+                        cancelAnimationFrame(player.scoreAnimationFrame);
+                    }
+
+                    player.scoreDelta = delta;
+
+                    if (delta === 0) {
+                        player.displayScore = endScore;
+                        player.scoreDelta = 0;
+                        return;
+                    }
+
+                    const duration = Math.min(1600, Math.max(700, Math.abs(delta) * 2));
+                    const startTime = performance.now();
+
+                    const tick = (now) => {
+                        const progress = Math.min(1, (now - startTime) / duration);
+                        const eased = 1 - Math.pow(1 - progress, 3);
+                        player.displayScore = Math.round(startScore + (delta * eased));
+
+                        if (progress < 1) {
+                            player.scoreAnimationFrame = requestAnimationFrame(tick);
+                        } else {
+                            player.displayScore = endScore;
+                            player.scoreDelta = 0;
+                            player.scoreAnimationFrame = null;
+                        }
+                    };
+
+                    player.scoreAnimationFrame = requestAnimationFrame(tick);
                 },
 
                 canUseCard(cardId, ownerPlayerId = null) {
@@ -1269,13 +1655,19 @@
 
                 async executeUseCard(cardId, payload = {}) {
                     this.isUsingCard = true;
+                    this.deferCardEffectPlayerSync = true;
                     this.showGamblerModal = false;
                     this.showTargetModal = false;
                     try {
                         const body = { card_id: cardId, ...payload };
                         await this.postJson('/room/' + this.roomCode + '/cards/use', body);
+                        this.showInventoryModal = false;
+                        this.showShopModal = false;
+                        this.showGamblerModal = false;
+                        this.showTargetModal = false;
                         this.notify('Kartu dipakai. Semoga musuh makin kesel.');
                     } catch (error) {
+                        this.deferCardEffectPlayerSync = false;
                         this.notify(error.message || 'Gagal pakai kartu.', 'error');
                     } finally {
                         this.isUsingCard = false;
@@ -1289,15 +1681,54 @@
 
 
 
-                showEffectNotice(type, cardName, message) {
+                showEffectNotice(payload, message) {
                     if (this.effectNotice.timeout) clearTimeout(this.effectNotice.timeout);
+                    if (this.pendingEffectFlushTimeout) {
+                        clearTimeout(this.pendingEffectFlushTimeout);
+                        this.pendingEffectFlushTimeout = null;
+                    }
+                    if (this.effectNotice.show && this.pendingEffectPlayers) {
+                        this.syncPlayers(this.pendingEffectPlayers);
+                        this.pendingEffectPlayers = null;
+                    }
+                    const card = this.cardCatalog.find((item) => item.id === payload.cardId) || {};
+                    const type = payload.cardType || card.type || 'spell';
                     this.effectNotice.type = type;
-                    this.effectNotice.cardName = cardName;
+                    this.effectNotice.icon = card.icon || (type === 'trap' ? '!' : '✦');
+                    this.effectNotice.cardName = payload.cardName || card.name || 'Kartu';
+                    this.effectNotice.cardDescription = card.description || 'Efek kartu berhasil dijalankan.';
                     this.effectNotice.message = message;
+                    this.effectNotice.usedByName = payload.usedByPlayerName || 'Pemain';
+                    this.effectNotice.targetName = payload.targetPlayerName
+                        || (payload.targetPlayerId ? this.nameById(payload.targetPlayerId) : null)
+                        || (type === 'trap' ? 'Target tidak tercatat' : 'Diri sendiri / area efek');
+                    this.effectNotice.isRandom = !!payload.isRandom;
                     this.effectNotice.show = true;
+                    this.deferCardEffectPlayerSync = true;
                     this.effectNotice.timeout = setTimeout(() => {
-                        this.effectNotice.show = false;
+                        this.closeEffectNotice();
                     }, 5000);
+                },
+
+                closeEffectNotice() {
+                    if (this.effectNotice.timeout) {
+                        clearTimeout(this.effectNotice.timeout);
+                        this.effectNotice.timeout = null;
+                    }
+
+                    this.effectNotice.show = false;
+                    this.deferCardEffectPlayerSync = false;
+
+                    if (this.pendingEffectFlushTimeout) {
+                        clearTimeout(this.pendingEffectFlushTimeout);
+                    }
+                    this.pendingEffectFlushTimeout = setTimeout(() => {
+                        if (this.pendingEffectPlayers) {
+                            this.syncPlayers(this.pendingEffectPlayers);
+                            this.pendingEffectPlayers = null;
+                        }
+                        this.pendingEffectFlushTimeout = null;
+                    }, 180);
                 },
 
                 cardTypeClass(type) {
@@ -1308,13 +1739,15 @@
 
                 animateDice(result, pId, newScore) {
                     const pIndex = this.players.findIndex(p => p.id === pId);
+                    const rollValues = Array.isArray(result) ? result : [result];
+                    const rollerName = pIndex > -1 ? this.players[pIndex].name : '';
                     if (pIndex > -1) {
-                        this.lastRollerName = this.players[pIndex].name;
+                        this.lastRollerName = '';
                     }
 
                     this.isAnimating = true;
                     this.isRolling = false;
-                    this.recentDice = Array.isArray(result) ? result : [result];
+                    this.recentDice = rollValues;
 
                     this.$nextTick(() => {
                         const diceEls = document.querySelectorAll('.dice');
@@ -1327,15 +1760,33 @@
 
                     setTimeout(() => {
                         this.isAnimating = false;
-                        if (pIndex > -1) {
-                            this.players[pIndex].score = newScore;
+                        this.lastRollerName = rollerName;
+                        this.recentDice = rollValues;
+                        this.showRollResultNotice(rollValues);
+                        if (this.pendingRollPlayers) {
+                            setTimeout(() => {
+                                this.syncPlayers(this.pendingRollPlayers);
+                                this.pendingRollPlayers = null;
+                            }, 450);
                         }
                     }, 1200);
                 },
 
+                showRollResultNotice(rollValues) {
+                    if (this.rollResultNotice.timeout) clearTimeout(this.rollResultNotice.timeout);
+                    this.rollResultNotice.value = rollValues.join(' + ');
+                    this.rollResultNotice.show = false;
+                    this.$nextTick(() => {
+                        this.rollResultNotice.show = true;
+                        this.rollResultNotice.timeout = setTimeout(() => {
+                            this.rollResultNotice.show = false;
+                        }, 1150);
+                    });
+                },
+
                 startLoadoutTimer() {
                     if (this.loadoutTimer) clearInterval(this.loadoutTimer);
-                    this.loadoutTimeLeft = 30;
+                    this.updateLoadoutTime();
                     this.loadoutTimer = setInterval(() => {
                         this.updateLoadoutTime();
                     }, 1000);
@@ -1346,16 +1797,74 @@
                         if (this.loadoutTimer) clearInterval(this.loadoutTimer);
                         return;
                     }
-                    this.loadoutTimeLeft = Math.max(0, this.loadoutTimeLeft - 1);
+                    const serverNow = Math.floor(Date.now() / 1000) + this.serverTimeOffset;
+                    this.loadoutTimeLeft = Math.max(0, (this.selectionEndTime || serverNow) - serverNow);
 
-                    if (this.loadoutTimeLeft === 0 && !this.hasSelectedCards) {
+                    if (this.loadoutTimeLeft === 0 && !this.loadoutAutoSubmitted) {
                         if (this.loadoutTimer) clearInterval(this.loadoutTimer);
-                        this.submitLoadout();
+                        this.loadoutAutoSubmitted = true;
+                        this.submitLoadout(true);
                     }
                 },
 
-                toggleLoadoutCard(card) {
-                    if (this.hasSelectedCards) return;
+                formattedLoadoutTime() {
+                    const minutes = Math.floor(this.loadoutTimeLeft / 60);
+                    const seconds = this.loadoutTimeLeft % 60;
+                    return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+                },
+
+                loadoutCards() {
+                    return this.cardCatalog.filter((card) => {
+                        return card.type === this.loadoutTab && !['multiplier', 'skip_si'].includes(card.id);
+                    });
+                },
+
+                syncSelectedLoadoutFromInventory() {
+                    if (this.selectedSpells.length > 0 || this.selectedTraps.length > 0) return;
+                    const cardsById = Object.fromEntries(this.cardCatalog.map((card) => [card.id, card]));
+                    this.selectedSpells = this.myInventory
+                        .filter((cardId) => cardsById[cardId]?.type === 'spell')
+                        .slice(0, 2);
+                    this.selectedTraps = this.myInventory
+                        .filter((cardId) => cardsById[cardId]?.type === 'trap')
+                        .slice(0, 2);
+                },
+
+                selectedLoadoutCard() {
+                    return this.cardCatalog.find((card) => card.id === this.previewLoadoutCardId) || null;
+                },
+
+                previewFirstLoadoutCard() {
+                    const cards = this.loadoutCards();
+                    this.previewLoadoutCardId = cards.length > 0 ? cards[0].id : null;
+                },
+
+                previewLoadoutCard(card) {
+                    if (!card || card.not_available) return;
+                    this.previewLoadoutCardId = card.id;
+                },
+
+                isLoadoutSelected(card) {
+                    if (!card) return false;
+                    return card.type === 'spell'
+                        ? this.selectedSpells.includes(card.id)
+                        : this.selectedTraps.includes(card.id);
+                },
+
+                canSelectLoadoutCard(card) {
+                    if (!card || card.not_available || this.hasSelectedCards) return false;
+                    if (card.type === 'spell') {
+                        return this.selectedSpells.length < 2 || this.selectedSpells.includes(card.id);
+                    }
+                    if (card.type === 'trap') {
+                        return this.selectedTraps.length < 2 || this.selectedTraps.includes(card.id);
+                    }
+                    return false;
+                },
+
+                selectPreviewCard() {
+                    const card = this.selectedLoadoutCard();
+                    if (!card || !this.canSelectLoadoutCard(card)) return;
                     if (card.type === 'spell') {
                         if (this.selectedSpells.includes(card.id)) {
                             this.selectedSpells = this.selectedSpells.filter(id => id !== card.id);
@@ -1371,16 +1880,19 @@
                     }
                 },
 
-                async submitLoadout() {
-                    if (this.hasSelectedCards || this.isSubmittingLoadout) return;
+                async submitLoadout(forceTimeout = false) {
+                    if ((this.hasSelectedCards && !forceTimeout) || this.isSubmittingLoadout) return;
                     this.isSubmittingLoadout = true;
                     try {
                         await this.postJson('/room/' + this.roomCode + '/submit-loadout', {
                             spells: this.selectedSpells,
-                            traps: this.selectedTraps
+                            traps: this.selectedTraps,
+                            force_timeout: forceTimeout
                         });
                         this.hasSelectedCards = true;
-                        this.notify('Loadout terkunci. Tunggu pemain lain.');
+                        if (!forceTimeout) {
+                            this.notify('Loadout terkunci. Tunggu pemain lain.');
+                        }
                     } catch (error) {
                         this.notify(error.message || 'Gagal menyimpan loadout.', 'error');
                     } finally {

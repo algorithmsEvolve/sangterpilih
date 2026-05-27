@@ -10,6 +10,7 @@ use App\Events\PlayerJoined;
 use App\Events\PlayerLeft;
 use App\Events\RoomClosed;
 use App\Events\RoomStateUpdated;
+use App\Events\RoomsUpdated;
 use App\Repositories\RoomRedisRepository;
 use App\Services\GameModes\ClassicMode;
 use App\Services\GameModes\SurvivalMode;
@@ -20,6 +21,7 @@ class GameRedisController extends Controller
 {
     private const CARD_SKIP = 'skip_si';
     private const CARD_MULTIPLIER = 'multiplier';
+    private const LOADOUT_SELECTION_SECONDS = 120;
 
     private function getModeService(string $mode): GameModeInterface
     {
@@ -134,6 +136,7 @@ class GameRedisController extends Controller
             'pendingTrapConfirmations' => $room['pending_trap_confirmations'] ?? [],
             'trapTargetPlayerId' => $room['trap_target_player_id'],
             'selectionEndTime' => $room['selection_end_time'] ?? null,
+            'serverTime' => time(),
             'players' => $mappedPlayers,
         ];
     }
@@ -144,6 +147,11 @@ class GameRedisController extends Controller
         if ($room) {
             broadcast(new RoomStateUpdated($code, $this->buildRoomState($room, false)));
         }
+    }
+
+    private function broadcastRoomsUpdated(): void
+    {
+        broadcast(new RoomsUpdated());
     }
 
     private function startTurnSnapshot(array &$room, array $activePlayer): void
@@ -214,6 +222,50 @@ class GameRedisController extends Controller
         return false;
     }
 
+    private function startPlayingFromLoadout(array &$room, string $code): void
+    {
+        $players = array_values($room['players']);
+        usort($players, function($a, $b) { return strcmp($a['id'], $b['id']); });
+
+        $firstPlayer = $players[0];
+        foreach ($room['players'] as $pId => $p) {
+            $room['players'][$pId]['inventory'] = $p['inventory'] ?? [];
+            $room['players'][$pId]['has_selected_cards'] = true;
+        }
+
+        $room['status'] = 'playing';
+        $room['current_turn_player_id'] = $firstPlayer['id'];
+        $room['current_round'] = 1;
+        $room['total_rounds'] = max(5, $room['total_rounds'] ?? 5);
+        $room['turn_index'] = 0;
+        $room['turn_has_skip'] = false;
+        $room['turn_multiplier_player_id'] = null;
+        $room['last_dice_result'] = null;
+        $room['last_roller_name'] = null;
+        $room['selection_end_time'] = null;
+
+        $this->startTurnSnapshot($room, $firstPlayer);
+        RoomRedisRepository::saveRoom($code, $room);
+
+        broadcast(new GameStarted($room['code'], $room['current_turn_player_id']));
+        $this->broadcastState($code);
+        $this->broadcastRoomsUpdated();
+    }
+
+    public function roomsView()
+    {
+        return view('rooms', [
+            'rooms' => RoomRedisRepository::listAvailableRooms(),
+        ]);
+    }
+
+    public function roomsList()
+    {
+        return response()->json([
+            'rooms' => RoomRedisRepository::listAvailableRooms(),
+        ]);
+    }
+
     public function createRoom(Request $request)
     {
         $request->validate([
@@ -231,6 +283,7 @@ class GameRedisController extends Controller
         $room = RoomRedisRepository::buildInitialRoom($request->code, $playerId, $request->host_name, $mode);
         
         RoomRedisRepository::saveRoom($request->code, $room);
+        $this->broadcastRoomsUpdated();
         session(['player_id' => $playerId]);
 
         return redirect('/room/' . $room['code']);
@@ -264,6 +317,7 @@ class GameRedisController extends Controller
         
         $room['players'][$playerId] = $newPlayer;
         RoomRedisRepository::saveRoom($request->code, $room);
+        $this->broadcastRoomsUpdated();
 
         session(['player_id' => $playerId]);
 
@@ -284,6 +338,14 @@ class GameRedisController extends Controller
         $currentPlayerId = session('player_id');
         if (!$currentPlayerId || !isset($room['players'][$currentPlayerId])) {
             return redirect('/')->with('error', 'Silakan join/create room terlebih dahulu.');
+        }
+
+        if (
+            ($room['status'] ?? null) === 'selecting_cards'
+            && !empty($room['selection_end_time'])
+            && time() >= (int) $room['selection_end_time']
+        ) {
+            $this->startPlayingFromLoadout($room, $code);
         }
 
         $currentPlayerObj = (object) $room['players'][$currentPlayerId]; // For Blade compatibility if it expects object properties, though arrays are fine. Let's send it as array if Blade allows, or object.
@@ -352,12 +414,13 @@ class GameRedisController extends Controller
 
         if ($room['mode'] === 'survival') {
             $room['status'] = 'selecting_cards';
-            $room['selection_end_time'] = time() + 30;
+            $room['selection_end_time'] = time() + self::LOADOUT_SELECTION_SECONDS;
             foreach ($room['players'] as $pId => $p) {
                 $room['players'][$pId]['has_selected_cards'] = false;
             }
             RoomRedisRepository::saveRoom($code, $room);
             $this->broadcastState($room['code']);
+            $this->broadcastRoomsUpdated();
             return response()->json([
                 'success' => true,
                 'state' => $this->buildRoomState($room, false),
@@ -379,6 +442,7 @@ class GameRedisController extends Controller
 
         broadcast(new GameStarted($room['code'], $room['current_turn_player_id']));
         $this->broadcastState($room['code']);
+        $this->broadcastRoomsUpdated();
 
         return response()->json([
             'success' => true,
@@ -419,40 +483,31 @@ class GameRedisController extends Controller
         $room['players'][$playerId]['inventory'] = $inventory;
         $room['players'][$playerId]['has_selected_cards'] = true;
 
+        $isExpired = !empty($room['selection_end_time']) && time() >= (int) $room['selection_end_time'];
+
         // Check if all players are ready
         $allReady = true;
-        foreach ($room['players'] as $p) {
-            if (empty($p['has_selected_cards'])) {
-                $allReady = false;
-                break;
+        if (!$isExpired) {
+            foreach ($room['players'] as $p) {
+                if (empty($p['has_selected_cards'])) {
+                    $allReady = false;
+                    break;
+                }
             }
         }
 
         // If everyone is ready, transition to playing
-        if ($allReady) {
-            $players = array_values($room['players']);
-            usort($players, function($a, $b) { return strcmp($a['id'], $b['id']); });
-            
-            $firstPlayer = $players[0];
-            $room['status'] = 'playing';
-            $room['current_turn_player_id'] = $firstPlayer['id'];
-            $room['current_round'] = 1;
-            $room['total_rounds'] = max(5, $room['total_rounds'] ?? 5);
-            $room['turn_index'] = 0;
-            $room['turn_has_skip'] = false;
-            $room['turn_multiplier_player_id'] = null;
-            $room['last_dice_result'] = null;
-            $room['last_roller_name'] = null;
-    
-            $this->startTurnSnapshot($room, $firstPlayer);
-            RoomRedisRepository::saveRoom($code, $room);
-
-            broadcast(new GameStarted($room['code'], $room['current_turn_player_id']));
+        $startedPlaying = false;
+        if ($allReady || $isExpired) {
+            $this->startPlayingFromLoadout($room, $code);
+            $startedPlaying = true;
         } else {
             RoomRedisRepository::saveRoom($code, $room);
         }
 
-        $this->broadcastState($room['code']);
+        if (!$startedPlaying) {
+            $this->broadcastState($room['code']);
+        }
 
         return response()->json([
             'success' => true,
@@ -502,6 +557,9 @@ class GameRedisController extends Controller
         
         $room['last_dice_result'] = $finalDiceResult;
         $room['last_roller_name'] = $room['players'][$playerId]['name'];
+
+        RoomRedisRepository::saveRoom($code, $room);
+        broadcast(new DiceRolled($room['code'], $playerId, $finalDiceResult, $room['players'][$playerId]['score']));
         
         if ($this->checkAndTriggerGameOver($room, $code)) {
             return response()->json([
@@ -513,9 +571,6 @@ class GameRedisController extends Controller
             ]);
         }
 
-        RoomRedisRepository::saveRoom($code, $room);
-
-        broadcast(new DiceRolled($room['code'], $playerId, $diceResult, $room['players'][$playerId]['score']));
         $this->broadcastState($room['code']);
 
         return response()->json([
@@ -658,6 +713,13 @@ class GameRedisController extends Controller
                 $effectPayload['cardId'] = $cardId;
                 $effectPayload['cardName'] = $catalog[$cardId]['name'];
                 $effectPayload['cardType'] = $catalog[$cardId]['type'];
+                $effectPayload['usedByPlayerId'] = $effectPayload['usedByPlayerId'] ?? $playerId;
+                $effectPayload['usedByPlayerName'] = $effectPayload['usedByPlayerName'] ?? $playerName;
+                $targetPlayerId = $effectPayload['targetPlayerId'] ?? $request->input('target_player_id');
+                if ($targetPlayerId && isset($room['players'][$targetPlayerId])) {
+                    $effectPayload['targetPlayerId'] = $targetPlayerId;
+                    $effectPayload['targetPlayerName'] = $effectPayload['targetPlayerName'] ?? $room['players'][$targetPlayerId]['name'];
+                }
                 if ($request->has('is_random') && $request->boolean('is_random')) {
                     $effectPayload['isRandom'] = true;
                 }
@@ -801,10 +863,12 @@ class GameRedisController extends Controller
             if ($isHost) {
                 broadcast(new RoomClosed($code));
                 RoomRedisRepository::deleteRoom($code);
+                $this->broadcastRoomsUpdated();
             } else {
                 unset($room['players'][$playerId]);
                 RoomRedisRepository::saveRoom($code, $room);
                 broadcast(new PlayerLeft($code, $playerId));
+                $this->broadcastRoomsUpdated();
             }
         }
 
