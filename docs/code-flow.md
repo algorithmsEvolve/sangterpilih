@@ -31,7 +31,7 @@ Controller closure:
 UI penting:
 
 - Brand tampil sebagai `Sang Terpilih`.
-- Asset brand memakai `public/images/sang-terpilih-imam.png`.
+- Asset brand memakai URL raw GitHub `https://raw.githubusercontent.com/algorithmsEvolve/sangterpilih/refs/heads/main/public/images/sang-terpilih-imam.png`.
 - Form utama hanya `Buat Room`.
 - Mode default adalah `survival`.
 - Join manual tidak lagi berada di halaman awal; join dilakukan dari `/rooms`.

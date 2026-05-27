@@ -77,7 +77,7 @@ Event broadcast realtime. Semua memakai `ShouldBroadcastNow` dan channel publik 
 
 `resources/views`
 
-- `welcome.blade.php`: halaman awal berisi brand Sang Terpilih, gambar imam di `public/images/sang-terpilih-imam.png`, form `Buat Room`, tombol `Gabung Room`, dan katalog kartu.
+- `welcome.blade.php`: halaman awal berisi brand Sang Terpilih, gambar imam dari URL raw GitHub, form `Buat Room`, tombol `Gabung Room`, dan katalog kartu.
 - `rooms.blade.php`: halaman daftar room waiting, subscribe channel `rooms`, refresh daftar room via `/rooms/list`, dan modal input nama sebelum join.
 - `room.blade.php`: layout utama game, Alpine component, Echo listener, fetch action, inventory, shop, loadout, toast, modal efek kartu, animasi dadu, animasi LP/score, dan sequence game over.
 - `classicRoom.blade.php`: wrapper mode classic, extend `room`.
@@ -142,7 +142,7 @@ Session ini menjadi identitas pemain di room. Tidak ada login permanen untuk pem
 Halaman awal:
 
 - Judul brand: `Sang Terpilih`.
-- Asset brand: `public/images/sang-terpilih-imam.png`.
+- Asset brand: `https://raw.githubusercontent.com/algorithmsEvolve/sangterpilih/refs/heads/main/public/images/sang-terpilih-imam.png`.
 - Tagline: `Lempar dadumu, pasrahkan nasibmu, hindarilah tanggung jawab berat menjadi Imam!`
 - Form utama: `Buat Room`.
 - Mode default: `survival`.

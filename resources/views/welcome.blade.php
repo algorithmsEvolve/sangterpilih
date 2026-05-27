@@ -119,8 +119,9 @@
 
     <div class="text-center mb-10 z-10">
         <div class="flex items-center justify-center gap-4 mb-4">
-            <img src="{{ asset('images/sang-terpilih-imam.png') }}" alt="Ikon Sang Terpilih"
-                class="w-14 h-14 md:w-[72px] md:h-[72px] rounded-2xl object-cover border border-emerald-300/30 shadow-[0_0_28px_rgba(16,185,129,0.22)] bg-slate-900/60">
+            <img src="https://raw.githubusercontent.com/algorithmsEvolve/sangterpilih/refs/heads/main/public/images/sang-terpilih-imam.png"
+                alt="Ikon Sang Terpilih" loading="eager" decoding="async" referrerpolicy="no-referrer"
+                class="w-14 h-14 md:w-[72px] md:h-[72px] rounded-2xl object-cover border border-emerald-300/30 shadow-[0_0_28px_rgba(16,185,129,0.22)] bg-slate-900/60 shrink-0">
             <h1
                 class="text-3xl md:text-[52px] font-extrabold leading-[1.25] pb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-cyan-200 to-amber-200 drop-shadow-lg">
                 Sang Terpilih</h1>
