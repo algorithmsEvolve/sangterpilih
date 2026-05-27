@@ -8,6 +8,26 @@
     ],
     "rewrites": [
         {
+            "source": "/images/(.*)",
+            "destination": "/public/images/$1"
+        },
+        {
+            "source": "/css/(.*)",
+            "destination": "/public/css/$1"
+        },
+        {
+            "source": "/js/(.*)",
+            "destination": "/public/js/$1"
+        },
+        {
+            "source": "/favicon.ico",
+            "destination": "/public/favicon.ico"
+        },
+        {
+            "source": "/robots.txt",
+            "destination": "/public/robots.txt"
+        },
+        {
             "source": "/((?!images|css|js|favicon.ico|robots.txt).*)",
             "destination": "/public/index.php"
         }
