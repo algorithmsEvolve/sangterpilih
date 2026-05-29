@@ -182,7 +182,7 @@
     <div class="flex flex-col md:flex-row gap-8 z-10 w-full max-w-4xl justify-center">
         <!-- Create Room -->
         <div class="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl transition hover:border-pink-500/50">
-            <h2 class="text-2xl font-bold mb-6 text-pink-400">Create Room</h2>
+            <h2 class="text-2xl font-bold mb-6 text-pink-400">Buat Room</h2>
             <form action="/room/create" method="POST" class="space-y-4" @submit="formLoading = 'create'">
                 @csrf
                 <div>
@@ -208,7 +208,7 @@
                 <button type="submit" :disabled="formLoading !== null"
                     class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-pink-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                     <span x-show="formLoading === 'create'" class="nb-btn-spinner"></span>
-                    <span x-text="formLoading === 'create' ? 'Membuat…' : 'Create Room'"></span>
+                    <span x-text="formLoading === 'create' ? 'Membuat…' : 'Buat Room'"></span>
                 </button>
             </form>
         </div>
