@@ -124,7 +124,7 @@
                 class="w-14 h-14 md:w-[72px] md:h-[72px] rounded-2xl object-cover border border-emerald-300/30 shadow-[0_0_28px_rgba(16,185,129,0.22)] bg-slate-900/60 shrink-0">
             <h1
                 class="text-3xl md:text-[52px] font-extrabold leading-[1.25] pb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-cyan-200 to-amber-200 drop-shadow-lg">
-                Sang Terpilih</h1>
+                The Chosen One</h1>
         </div>
         <p class="text-xl text-slate-300">Lempar dadumu, pasrahkan nasibmu, hindarilah tanggung jawab berat menjadi Imam!</p>
     </div>
