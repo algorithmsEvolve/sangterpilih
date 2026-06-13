@@ -259,7 +259,583 @@
         }
 
         .nb-effect-burst {
-            animation: nb-burst 0.7s ease-out;
+            animation: nb-effect-arena-enter 0.42s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .nb-effect-arena {
+            perspective: 1200px;
+            transform-style: preserve-3d;
+            overflow: visible;
+        }
+
+        .nb-effect-aura {
+            position: absolute;
+            inset: -30%;
+            opacity: .42;
+            pointer-events: none;
+            background:
+                conic-gradient(from 0deg, transparent, rgba(255, 255, 255, .18), transparent 34%, rgba(255, 255, 255, .1), transparent 68%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .12), transparent 42%);
+            animation: nb-effect-aura-spin 9s linear infinite;
+        }
+
+        .nb-effect-card-stage {
+            position: relative;
+            z-index: 30;
+            min-height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1100px;
+            isolation: isolate;
+            overflow: visible;
+        }
+
+        .nb-effect-card-stage::before,
+        .nb-effect-card-stage::after {
+            content: '';
+            position: absolute;
+            border-radius: 9999px;
+            pointer-events: none;
+        }
+
+        .nb-effect-card-stage::before {
+            width: 290px;
+            height: 290px;
+            background: radial-gradient(circle, color-mix(in srgb, var(--nb-effect-primary) 26%, transparent), transparent 64%);
+            opacity: .82;
+            animation: nb-effect-orb-pulse 2.8s ease-in-out infinite;
+        }
+
+        .nb-effect-card-stage::after {
+            width: 220px;
+            height: 28px;
+            bottom: 34px;
+            background: rgba(0, 0, 0, .5);
+            transform: rotateX(64deg);
+            animation: nb-effect-shadow 3s ease-in-out infinite;
+        }
+
+        .nb-effect-card-stage.spell {
+            --nb-effect-primary: #34d399;
+            --nb-effect-secondary: #22d3ee;
+            --nb-effect-deep: #064e3b;
+            --nb-effect-glow: rgba(52, 211, 153, .68);
+        }
+
+        .nb-effect-card-stage.trap {
+            --nb-effect-primary: #fb7185;
+            --nb-effect-secondary: #f97316;
+            --nb-effect-deep: #7f1d1d;
+            --nb-effect-glow: rgba(248, 113, 113, .72);
+        }
+
+        .nb-effect-ring {
+            position: absolute;
+            width: 318px;
+            height: 318px;
+            border-radius: 9999px;
+            border: 1px solid color-mix(in srgb, var(--nb-effect-primary) 70%, transparent);
+            box-shadow: inset 0 0 24px color-mix(in srgb, var(--nb-effect-primary) 18%, transparent);
+            transform: rotateX(68deg) rotateZ(0deg);
+            animation: nb-effect-ring-spin 5.2s linear infinite;
+            opacity: .62;
+            will-change: transform;
+        }
+
+        .nb-effect-ring:nth-child(2) {
+            display: none;
+        }
+
+        .nb-effect-card-3d {
+            position: relative;
+            z-index: 60;
+            width: min(230px, 68vw);
+            aspect-ratio: 5 / 8;
+            transform-style: preserve-3d;
+            animation: nb-effect-card-summon 1.65s cubic-bezier(.2, .85, .2, 1) both, nb-effect-card-float 4.2s ease-in-out 1.65s infinite;
+            will-change: transform, opacity;
+        }
+
+        .nb-effect-card-face {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            border-radius: 18px;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+            box-shadow: 0 24px 42px rgba(0, 0, 0, .52), 0 0 22px color-mix(in srgb, var(--nb-effect-primary) 28%, transparent);
+        }
+
+        .nb-effect-card-back {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #d6a457;
+            background:
+                repeating-conic-gradient(from 20deg, #4c1d95 0 8deg, #111827 8deg 18deg, #7c2d12 18deg 27deg),
+                radial-gradient(circle at 50% 50%, #fbbf24, #7c2d12 34%, #020617 68%);
+            box-shadow: inset 0 0 0 10px rgba(0, 0, 0, .35), inset 0 0 36px rgba(251, 191, 36, .26);
+        }
+
+        .nb-effect-card-back::before {
+            content: '';
+            width: 72%;
+            aspect-ratio: 1;
+            border-radius: 9999px;
+            border: 2px solid rgba(255, 255, 255, .45);
+            background: radial-gradient(circle, rgba(255, 255, 255, .28), transparent 58%);
+            box-shadow: 0 0 30px rgba(251, 191, 36, .5);
+        }
+
+        .nb-effect-card-front {
+            transform: rotateY(180deg);
+            border: 3px solid color-mix(in srgb, var(--nb-effect-primary) 86%, white 14%);
+            background:
+                radial-gradient(circle at 22% 16%, color-mix(in srgb, var(--nb-effect-secondary) 34%, transparent), transparent 34%),
+                linear-gradient(155deg, color-mix(in srgb, var(--nb-effect-primary) 31%, #020617), #020617 42%, color-mix(in srgb, var(--nb-effect-deep) 85%, #000) 100%);
+            box-shadow: inset 0 0 0 7px rgba(255, 255, 255, .08), inset 0 0 34px color-mix(in srgb, var(--nb-effect-primary) 22%, transparent);
+        }
+
+        .nb-effect-card-front.spell-card {
+            border-radius: 18px 18px 22px 22px;
+        }
+
+        .nb-effect-card-front.trap-card {
+            border-radius: 22px 22px 18px 18px;
+        }
+
+        .nb-effect-card-front::after {
+            content: '';
+            position: absolute;
+            inset: -25% -70%;
+            background: linear-gradient(115deg, transparent 43%, rgba(255, 255, 255, .72) 50%, transparent 57%);
+            transform: translateX(-35%) rotate(12deg);
+            animation: nb-effect-card-sheen 1.65s ease-out both;
+            pointer-events: none;
+        }
+
+        .nb-effect-card-title {
+            position: absolute;
+            inset: 10px 10px auto;
+            z-index: 2;
+            border-radius: 10px;
+            padding: 9px 10px;
+            background: rgba(2, 6, 23, .82);
+            border: 1px solid rgba(255, 255, 255, .18);
+            font-size: .86rem;
+            font-weight: 1000;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, .8);
+        }
+
+        .nb-effect-card-art-frame {
+            position: absolute;
+            inset: 64px 14px 94px;
+            overflow: hidden;
+            border-radius: 12px;
+            border: 2px solid color-mix(in srgb, var(--nb-effect-primary) 54%, white 12%);
+            background:
+                radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--nb-effect-primary) 22%, transparent), transparent 48%),
+                #020617;
+            box-shadow: inset 0 0 28px rgba(0, 0, 0, .68), 0 0 24px color-mix(in srgb, var(--nb-effect-primary) 26%, transparent);
+        }
+
+        .nb-effect-card-art-frame .card-image,
+        .nb-effect-card-art-frame img,
+        .nb-effect-card-art-frame svg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .nb-card-generated-art {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .38), transparent 18%),
+                radial-gradient(circle at 68% 68%, var(--nb-card-secondary, rgba(255, 255, 255, .18)), transparent 32%),
+                linear-gradient(135deg, var(--nb-card-primary, #34d399), #020617 68%);
+        }
+
+        .nb-card-generated-art::before {
+            content: '';
+            position: absolute;
+            inset: 10%;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, .26);
+            box-shadow: 0 0 28px var(--nb-card-glow, rgba(52, 211, 153, .5)), inset 0 0 30px rgba(255, 255, 255, .08);
+            transform: rotate(-18deg) scaleX(1.35);
+        }
+
+        .nb-card-generated-art::after {
+            content: '';
+            position: absolute;
+            inset: -40% -25%;
+            background: repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, .08) 14px 16px);
+            mix-blend-mode: screen;
+            opacity: .7;
+        }
+
+        .nb-card-generated-art-icon {
+            position: relative;
+            z-index: 1;
+            font-size: inherit;
+            text-shadow: 0 10px 18px rgba(0, 0, 0, .65), 0 0 18px var(--nb-card-glow, rgba(255, 255, 255, .45));
+            transform: translateZ(22px);
+        }
+
+        .nb-card-effect-art {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .nb-card-effect-art-icon {
+            position: relative;
+            z-index: 2;
+            font-size: 5.2rem;
+            line-height: 1;
+            text-shadow: 0 10px 20px rgba(0, 0, 0, .62), 0 0 22px var(--nb-card-glow, rgba(255, 255, 255, .45));
+        }
+
+        .nb-card-effect-art-name {
+            position: relative;
+            z-index: 2;
+            max-width: 88%;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, .22);
+            background: rgba(2, 6, 23, .58);
+            padding: 6px 10px;
+            color: rgba(255, 255, 255, .9);
+            font-size: .7rem;
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .nb-effect-card-desc {
+            position: absolute;
+            inset: auto 14px 16px;
+            max-height: 64px;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(2, 6, 23, .78);
+            padding: 9px;
+            color: rgba(255, 255, 255, .82);
+            font-size: .7rem;
+            line-height: 1.25;
+        }
+
+        .nb-effect-sigil {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            background: var(--nb-effect-primary);
+            box-shadow: 0 0 16px 5px var(--nb-effect-glow);
+            opacity: 0;
+            animation: nb-effect-sigil 1.55s ease-out .28s both;
+        }
+
+        .nb-effect-sigil:nth-of-type(1) { top: 14%; left: 15%; }
+        .nb-effect-sigil:nth-of-type(2) { top: 20%; right: 12%; animation-delay: .38s; }
+        .nb-effect-sigil:nth-of-type(3) { bottom: 22%; left: 11%; animation-delay: .5s; }
+        .nb-effect-sigil:nth-of-type(4) { bottom: 17%; right: 18%; animation-delay: .62s; }
+
+        .nb-effect-info-panel {
+            position: relative;
+            z-index: 20;
+            animation: nb-effect-info-rise .52s cubic-bezier(.16, 1, .3, 1) .38s both;
+        }
+
+        .nb-target-roulette-panel {
+            overflow: hidden;
+            animation: nb-effect-arena-enter .28s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .nb-target-gacha {
+            position: relative;
+            min-height: 390px;
+            overflow: hidden;
+            border-radius: 30px;
+            border: 1px solid rgba(250, 204, 21, .34);
+            background:
+                radial-gradient(circle at 50% 40%, rgba(250, 204, 21, .18), transparent 34%),
+                radial-gradient(circle at 50% 100%, rgba(220, 38, 38, .18), transparent 42%),
+                linear-gradient(180deg, rgba(15, 23, 42, .96), rgba(69, 10, 10, .72));
+            box-shadow: inset 0 0 54px rgba(0, 0, 0, .62), 0 24px 56px rgba(0, 0, 0, .42);
+        }
+
+        .nb-target-gacha::before {
+            content: '';
+            position: absolute;
+            inset: -45%;
+            background: conic-gradient(from 0deg, transparent, rgba(250, 204, 21, .16), transparent, rgba(239, 68, 68, .12), transparent);
+            animation: nb-target-gacha-aura 1.35s linear infinite;
+        }
+
+        .nb-target-gacha-wheel-wrap {
+            position: absolute;
+            left: 50%;
+            top: 52%;
+            width: min(350px, 78vw);
+            aspect-ratio: 1;
+            transform: translate(-50%, -50%);
+        }
+
+        .nb-target-gacha-pointer {
+            position: absolute;
+            left: 50%;
+            top: -10px;
+            z-index: 8;
+            width: 0;
+            height: 0;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-top: 52px solid #facc15;
+            filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .5)) drop-shadow(0 0 18px rgba(250, 204, 21, .45));
+            transform: translateX(-50%);
+            animation: nb-target-pointer-tick .18s ease-in-out 14 alternate;
+        }
+
+        .nb-target-gacha-pointer::after {
+            content: '';
+            position: absolute;
+            left: -9px;
+            top: -45px;
+            width: 18px;
+            height: 18px;
+            border-radius: 9999px;
+            background: #7f1d1d;
+            box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .38);
+        }
+
+        .nb-target-gacha-wheel {
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            border: 5px solid rgba(250, 204, 21, .78);
+            background:
+                radial-gradient(circle, rgba(15, 23, 42, .96) 0 23%, transparent 24%),
+                repeating-conic-gradient(from -18deg, rgba(250, 204, 21, .9) 0 30deg, rgba(185, 28, 28, .88) 30deg 60deg, rgba(30, 41, 59, .92) 60deg 90deg);
+            box-shadow: inset 0 0 34px rgba(0, 0, 0, .58), 0 0 46px rgba(250, 204, 21, .22);
+            animation: nb-target-gacha-spin 2.65s cubic-bezier(.12, .72, .1, 1) forwards;
+        }
+
+        .nb-target-gacha-wheel::before {
+            content: '';
+            position: absolute;
+            inset: 14px;
+            border-radius: inherit;
+            border: 1px dashed rgba(255, 255, 255, .48);
+        }
+
+        .nb-target-gacha-wheel::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 86px;
+            aspect-ratio: 1;
+            border-radius: 9999px;
+            border: 3px solid rgba(250, 204, 21, .78);
+            background: radial-gradient(circle at 35% 28%, rgba(255, 255, 255, .34), rgba(127, 29, 29, .96) 58%);
+            box-shadow: 0 0 28px rgba(0, 0, 0, .45);
+            transform: translate(-50%, -50%);
+        }
+
+        .nb-target-gacha-segment {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 3;
+            width: 118px;
+            margin-left: -59px;
+            transform: rotate(var(--angle)) translateY(-122px) rotate(calc(-1 * var(--angle)));
+            transform-origin: 50% 50%;
+        }
+
+        .nb-target-gacha-name {
+            display: inline-flex;
+            width: 118px;
+            height: 34px;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, .45);
+            background: rgba(255, 251, 235, .94);
+            color: #431407;
+            font-size: .72rem;
+            font-weight: 1000;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, .28);
+        }
+
+        .nb-target-gacha-winner {
+            position: absolute;
+            left: 50%;
+            bottom: 20px;
+            z-index: 10;
+            display: flex;
+            max-width: min(440px, 86vw);
+            align-items: center;
+            gap: 12px;
+            padding: 13px 18px;
+            border-radius: 20px;
+            border: 2px solid rgba(250, 204, 21, .82);
+            background: linear-gradient(135deg, rgba(255, 251, 235, .98), rgba(253, 230, 138, .96));
+            color: #431407;
+            box-shadow: 0 24px 54px rgba(0, 0, 0, .46), 0 0 44px rgba(250, 204, 21, .32);
+            opacity: 0;
+            transform: translateX(-50%) translateY(24px) scale(.88);
+            animation: nb-target-gacha-winner .62s cubic-bezier(.16, 1, .3, 1) 2.45s both;
+        }
+
+        .nb-target-gacha-initial {
+            display: inline-flex;
+            width: 48px;
+            height: 48px;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #f59e0b, #dc2626);
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 1000;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .34);
+        }
+
+        .nb-target-gacha-name-winner {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: clamp(1.2rem, 4.5vw, 2rem);
+            font-weight: 1000;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+        }
+
+        .nb-target-gacha-burst {
+            position: absolute;
+            inset: 0;
+            z-index: 7;
+            opacity: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(250, 204, 21, .42), transparent 36%);
+            animation: nb-target-gacha-burst .72s ease-out 2.38s both;
+            pointer-events: none;
+        }
+
+        @keyframes nb-target-gacha-spin {
+            0% { transform: rotate(0deg); filter: blur(0); }
+            30% { filter: blur(1.6px); }
+            72% { filter: blur(.65px); }
+            88% { transform: rotate(calc(var(--target-rotation) + 18deg)); filter: blur(0); }
+            100% { transform: rotate(var(--target-rotation)); filter: blur(0); }
+        }
+
+        @keyframes nb-target-gacha-aura {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes nb-target-pointer-tick {
+            from { transform: translateX(-50%) rotate(-5deg); }
+            to { transform: translateX(-50%) rotate(5deg); }
+        }
+
+        @keyframes nb-target-gacha-winner {
+            to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+
+        @keyframes nb-target-gacha-burst {
+            0% { opacity: 0; transform: scale(.55); }
+            48% { opacity: 1; transform: scale(1.06); }
+            100% { opacity: 0; transform: scale(1.46); }
+        }
+
+        @keyframes nb-effect-arena-enter {
+            from { opacity: 0; transform: translateY(14px) scale(.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes nb-effect-aura-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes nb-effect-orb-pulse {
+            0%, 100% { transform: scale(.85); opacity: .48; }
+            50% { transform: scale(1.12); opacity: .9; }
+        }
+
+        @keyframes nb-effect-shadow {
+            0%, 100% { transform: rotateX(64deg) scale(.9); opacity: .48; }
+            50% { transform: rotateX(64deg) scale(1.14); opacity: .78; }
+        }
+
+        @keyframes nb-effect-ring-spin {
+            to { transform: rotateX(68deg) rotateZ(360deg); }
+        }
+
+        @keyframes nb-effect-card-summon {
+            0% { opacity: 0; transform: translate3d(0, 58px, -120px) rotateX(54deg) rotateY(-160deg) rotateZ(-8deg) scale(.72); }
+            22% { opacity: 1; transform: translate3d(0, -14px, 30px) rotateX(38deg) rotateY(-120deg) rotateZ(6deg) scale(.92); }
+            58% { transform: translate3d(0, -4px, 76px) rotateX(10deg) rotateY(34deg) rotateZ(-2deg) scale(1.04); }
+            76% { transform: translate3d(0, 0, 44px) rotateX(3deg) rotateY(190deg) rotateZ(1deg) scale(1.03); }
+            100% { opacity: 1; transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(180deg) rotateZ(0deg) scale(1); }
+        }
+
+        @keyframes nb-effect-card-float {
+            0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(180deg) rotateZ(0deg); }
+            50% { transform: translateY(-7px) rotateX(2deg) rotateY(182deg) rotateZ(-.5deg); }
+        }
+
+        @keyframes nb-effect-card-sheen {
+            0%, 48% { opacity: 0; transform: translateX(-38%) rotate(12deg); }
+            64% { opacity: .82; }
+            100% { opacity: 0; transform: translateX(72%) rotate(12deg); }
+        }
+
+        @keyframes nb-effect-sigil {
+            0% { opacity: 0; transform: translate3d(0, 18px, 0) scale(.5); }
+            28% { opacity: 1; }
+            100% { opacity: 0; transform: translate3d(0, -72px, 0) scale(1.35); }
+        }
+
+        @keyframes nb-effect-info-rise {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .nb-effect-burst,
+            .nb-effect-aura,
+            .nb-effect-card-3d,
+            .nb-effect-ring,
+            .nb-effect-sigil,
+            .nb-effect-info-panel,
+            .nb-effect-card-front::after,
+            .nb-target-roulette-panel,
+            .nb-target-gacha::before,
+            .nb-target-gacha-wheel,
+            .nb-target-gacha-pointer,
+            .nb-target-gacha-winner,
+            .nb-target-gacha-burst {
+                animation: none !important;
+            }
         }
 
         .nb-roll-result-burst {
@@ -387,53 +963,117 @@
             </div>
         </div>
 
+        <!-- Random Target Roulette -->
+        <div x-show="targetRoulette.show" x-cloak
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/78 backdrop-blur-md overflow-hidden">
+            <div class="nb-target-roulette-panel w-full max-w-3xl rounded-[2rem] border border-yellow-300/40 bg-gradient-to-br from-amber-950/90 via-slate-950/95 to-red-950/90 p-5 md:p-7 text-center shadow-[0_0_80px_rgba(250,204,21,0.18)]">
+                <p class="text-xs uppercase tracking-[0.35em] font-black text-yellow-200/80">Random Target Lock</p>
+                <h3 class="mt-2 text-3xl md:text-5xl font-black text-white">Menentukan Korban...</h3>
+                <p class="mt-2 text-sm text-slate-300">
+                    <span x-text="targetRoulette.cardName"></span>
+                    <span class="text-yellow-200 font-bold"> memilih target secara acak</span>
+                </p>
+
+                <div class="nb-target-gacha mt-5" :key="targetRoulette.animationKey">
+                    <div class="nb-target-gacha-wheel-wrap">
+                        <div class="nb-target-gacha-pointer"></div>
+                        <div class="nb-target-gacha-wheel" :style="`--target-rotation: ${targetRoulette.wheelRotation}deg`">
+                            <template x-for="(player, index) in targetRoulette.wheelPlayers" :key="`${targetRoulette.animationKey}-${index}-${player.id}`">
+                                <div class="nb-target-gacha-segment" :style="`--angle: ${targetRoulette.segmentAngles[index]}deg`">
+                                    <span class="nb-target-gacha-name truncate" x-text="player.name || '-'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="nb-target-gacha-burst"></div>
+                    <div class="nb-target-gacha-winner">
+                        <span class="nb-target-gacha-initial" x-text="targetInitial(targetRoulette.selectedPlayer)"></span>
+                        <span class="nb-target-gacha-name-winner" x-text="targetRoulette.selectedPlayer?.name || '-'"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-yellow-100">
+                    <span class="h-2 w-2 rounded-full bg-yellow-300 animate-pulse"></span>
+                    <span x-text="targetRoulette.locked ? 'Jarum berhenti ke target terpilih' : 'Jarum gacha sedang berputar'"></span>
+                </div>
+            </div>
+        </div>
+
         <!-- Card Effect Announcement -->
         <div x-show="effectNotice.show" x-cloak @click.self="closeEffectNotice()"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-            class="fixed inset-0 z-[155] flex items-center justify-center p-4 bg-slate-950/55 backdrop-blur-sm">
-            <div class="nb-effect-burst max-w-2xl w-full rounded-3xl border p-5 md:p-6 shadow-2xl backdrop-blur-md overflow-hidden relative"
+            class="fixed inset-0 z-[155] flex items-center justify-center p-3 md:p-4 bg-slate-950/75 backdrop-blur-md overflow-y-auto">
+            <div class="nb-effect-burst nb-effect-arena max-w-5xl w-full rounded-[2rem] border p-4 md:p-6 shadow-2xl backdrop-blur-md overflow-visible relative my-8"
                 :class="effectNotice.type === 'trap'
                     ? 'bg-gradient-to-br from-red-950/95 via-slate-950/95 to-red-900/80 border-red-400/60 text-red-50 shadow-red-900/30'
                     : 'bg-gradient-to-br from-emerald-950/95 via-slate-950/95 to-teal-900/80 border-emerald-400/60 text-emerald-50 shadow-emerald-900/30'">
+                <div class="nb-effect-aura"
+                    :class="effectNotice.type === 'trap' ? 'mix-blend-screen' : 'mix-blend-screen'"></div>
                 <div class="absolute inset-x-0 top-0 h-1"
                     :class="effectNotice.type === 'trap' ? 'bg-red-400' : 'bg-emerald-400'"></div>
 
                 <button type="button" @click="closeEffectNotice()"
-                    class="absolute right-4 top-4 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-white/80 hover:bg-white/20 hover:text-white transition">
+                    class="absolute right-4 top-4 z-20 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-white/80 hover:bg-white/20 hover:text-white transition">
                     Tutup
                 </button>
 
-                <div class="flex items-start gap-4 pr-16">
-                    <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border text-3xl shadow-lg"
-                        :class="effectNotice.type === 'trap'
-                            ? 'border-red-300/50 bg-red-500/20 text-red-100'
-                            : 'border-emerald-300/50 bg-emerald-500/20 text-emerald-100'"
-                        x-text="effectNotice.icon"></div>
-                    <div class="min-w-0">
-                        <p class="text-xs uppercase tracking-[0.24em] font-black opacity-80"
-                            x-text="effectNotice.type === 'trap' ? 'Trap Activated' : 'Spell Activated'"></p>
-                        <h4 class="text-3xl md:text-4xl font-black leading-tight mt-1" x-text="effectNotice.cardName"></h4>
-                        <p class="text-sm mt-2 opacity-80" x-text="effectNotice.cardDescription"></p>
-                    </div>
-                </div>
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.1fr)] gap-5 md:gap-7 items-center">
+                    <div class="nb-effect-card-stage" :class="effectNotice.type" :style="effectNotice.cardStyle">
+                        <div class="nb-effect-ring"></div>
+                        <span class="nb-effect-sigil"></span>
+                        <span class="nb-effect-sigil"></span>
+                        <span class="nb-effect-sigil"></span>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-5">
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1">Diaktifkan oleh</p>
-                        <p class="text-lg font-black truncate" x-text="effectNotice.usedByName"></p>
+                        <div class="nb-effect-card-3d" :key="effectNotice.animationKey">
+                            <div class="nb-effect-card-face nb-effect-card-back"></div>
+                            <div class="nb-effect-card-face nb-effect-card-front" :class="effectNotice.type === 'trap' ? 'trap-card' : 'spell-card'">
+                                <div class="nb-effect-card-title" x-text="effectNotice.cardName"></div>
+                                <div class="nb-effect-card-art-frame">
+                                    <span class="card-image" x-html="effectNotice.cardArt"></span>
+                                </div>
+                                <div class="nb-effect-card-desc" x-text="effectNotice.cardDescription"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1">Target efek</p>
-                        <p class="text-lg font-black truncate" x-text="effectNotice.targetName"></p>
-                        <p x-show="effectNotice.isRandom" class="text-xs mt-1 text-yellow-200 font-bold">Target dipilih acak</p>
-                    </div>
-                </div>
 
-                <div class="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
-                    <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2">Detail efek</p>
-                    <p class="text-base md:text-lg font-bold leading-relaxed" x-text="effectNotice.message"></p>
+                    <div class="nb-effect-info-panel min-w-0">
+                        <div class="inline-flex items-center gap-3 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.24em] shadow-lg"
+                            :class="effectNotice.type === 'trap'
+                                ? 'border-red-300/40 bg-red-500/15 text-red-100 shadow-red-900/20'
+                                : 'border-emerald-300/40 bg-emerald-500/15 text-emerald-100 shadow-emerald-900/20'">
+                            <span class="text-lg" x-text="effectNotice.icon"></span>
+                            <span x-text="effectNotice.type === 'trap' ? 'Trap Activated' : 'Spell Activated'"></span>
+                        </div>
+
+                        <h4 class="mt-4 text-4xl md:text-6xl font-black leading-[0.92] tracking-tight text-white drop-shadow-2xl" x-text="effectNotice.cardName"></h4>
+                        <p class="mt-4 text-sm md:text-base opacity-80 leading-relaxed" x-text="effectNotice.cardDescription"></p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner">
+                                <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1">Diaktifkan oleh</p>
+                                <p class="text-lg md:text-xl font-black truncate" x-text="effectNotice.usedByName"></p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner">
+                                <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1">Target efek</p>
+                                <p class="text-lg md:text-xl font-black truncate" x-text="effectNotice.targetName"></p>
+                                <p x-show="effectNotice.isRandom" class="text-xs mt-1 text-yellow-200 font-bold">Target dipilih acak</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 md:p-5 shadow-inner">
+                            <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2">Detail efek</p>
+                            <p class="text-base md:text-xl font-bold leading-relaxed" x-text="effectNotice.message"></p>
+                        </div>
+
+                        <p class="mt-4 text-xs uppercase tracking-[0.22em] text-white/45 font-bold">
+                            3D Card Summon Sequence
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1183,16 +1823,32 @@
                 loadoutTab: 'spell',
                 previewLoadoutCardId: null,
                 actionHistory: [],
+                targetRoulette: {
+                    show: false,
+                    locked: false,
+                    cardId: null,
+                    cardName: '',
+                    selectedPlayer: null,
+                    wheelPlayers: [],
+                    segmentAngles: [],
+                    wheelRotation: 0,
+                    animationKey: 0,
+                    lockTimeout: null,
+                    timeout: null,
+                },
                 effectNotice: {
                     show: false,
                     type: 'spell',
                     icon: '✦',
                     cardName: '',
                     cardDescription: '',
+                    cardArt: '',
+                    cardStyle: '',
                     message: '',
                     usedByName: '',
                     targetName: '',
                     isRandom: false,
+                    animationKey: 0,
                     timeout: null
                 },
                 toast: {
@@ -1236,9 +1892,18 @@
                                 msg = '[Target Acak] ' + msg;
                             }
 
-                            this.showEffectNotice(p, msg);
-                            // Store exactly the same message shown in effect notice.
-                            this.pushAction(msg, p.cardType || 'spell');
+                            const showNotice = () => {
+                                this.showEffectNotice(p, msg);
+                                // Store exactly the same message shown in effect notice.
+                                this.pushAction(msg, p.cardType || 'spell');
+                            };
+
+                            if (p.isRandom && p.targetPlayerId && p.usedByPlayerId !== this.currentPlayerId) {
+                                this.startBroadcastTargetRoulette(p, showNotice);
+                                return;
+                            }
+
+                            showNotice();
                         })
                         .listen('GameOver', (e) => {
                             this.prepareGameOver(e.leaderboard || []);
@@ -1423,6 +2088,46 @@
                     }[char]));
                 },
 
+                cardVisualPalette(card = {}, type = 'spell') {
+                    const palettes = {
+                        'bg-green-500': ['#22c55e', '#86efac', '#052e16', 'rgba(34, 197, 94, .62)'],
+                        'bg-green-400': ['#4ade80', '#bbf7d0', '#064e3b', 'rgba(74, 222, 128, .62)'],
+                        'bg-emerald-500': ['#10b981', '#6ee7b7', '#022c22', 'rgba(16, 185, 129, .64)'],
+                        'bg-green-600': ['#16a34a', '#bef264', '#052e16', 'rgba(22, 163, 74, .62)'],
+                        'bg-red-500': ['#ef4444', '#fb7185', '#450a0a', 'rgba(239, 68, 68, .66)'],
+                        'bg-red-600': ['#dc2626', '#f97316', '#450a0a', 'rgba(220, 38, 38, .68)'],
+                        'bg-red-700': ['#b91c1c', '#f43f5e', '#450a0a', 'rgba(185, 28, 28, .7)'],
+                        'bg-red-800': ['#991b1b', '#fb923c', '#450a0a', 'rgba(153, 27, 27, .72)'],
+                        'bg-blue-400': ['#60a5fa', '#22d3ee', '#172554', 'rgba(96, 165, 250, .62)'],
+                        'bg-blue-300': ['#93c5fd', '#e0f2fe', '#172554', 'rgba(147, 197, 253, .6)'],
+                        'bg-yellow-500': ['#eab308', '#fde047', '#422006', 'rgba(234, 179, 8, .64)'],
+                        'bg-yellow-400': ['#facc15', '#fef08a', '#422006', 'rgba(250, 204, 21, .64)'],
+                        'bg-indigo-500': ['#6366f1', '#a5b4fc', '#1e1b4b', 'rgba(99, 102, 241, .66)'],
+                        'bg-indigo-600': ['#4f46e5', '#818cf8', '#1e1b4b', 'rgba(79, 70, 229, .68)'],
+                        'bg-purple-400': ['#c084fc', '#f0abfc', '#3b0764', 'rgba(192, 132, 252, .62)'],
+                        'bg-purple-600': ['#9333ea', '#c084fc', '#3b0764', 'rgba(147, 51, 234, .68)'],
+                        'bg-gray-500': ['#64748b', '#cbd5e1', '#0f172a', 'rgba(100, 116, 139, .62)'],
+                        'bg-gray-600': ['#475569', '#94a3b8', '#020617', 'rgba(71, 85, 105, .64)'],
+                        'bg-gray-800': ['#1f2937', '#9ca3af', '#030712', 'rgba(31, 41, 55, .72)'],
+                        'bg-orange-500': ['#f97316', '#fdba74', '#431407', 'rgba(249, 115, 22, .66)'],
+                        'bg-orange-600': ['#ea580c', '#fb923c', '#431407', 'rgba(234, 88, 12, .68)'],
+                        'bg-white': ['#f8fafc', '#bae6fd', '#334155', 'rgba(248, 250, 252, .58)'],
+                        'bg-green-300': ['#86efac', '#dcfce7', '#14532d', 'rgba(134, 239, 172, .58)'],
+                    };
+
+                    const fallback = type === 'trap'
+                        ? ['#fb7185', '#f97316', '#7f1d1d', 'rgba(248, 113, 113, .72)']
+                        : ['#34d399', '#22d3ee', '#064e3b', 'rgba(52, 211, 153, .68)'];
+
+                    const [primary, secondary, deep, glow] = palettes[card?.color] || fallback;
+                    return { primary, secondary, deep, glow };
+                },
+
+                cardVisualStyle(card = {}, type = 'spell') {
+                    const palette = this.cardVisualPalette(card, type);
+                    return `--nb-effect-primary: ${palette.primary}; --nb-effect-secondary: ${palette.secondary}; --nb-effect-deep: ${palette.deep}; --nb-effect-glow: ${palette.glow}; --nb-card-primary: ${palette.primary}; --nb-card-secondary: ${palette.secondary}; --nb-card-glow: ${palette.glow};`;
+                },
+
                 cardArtHtml(card, size = 'md') {
                     if (card && card.image_url) {
                         return card.image_url;
@@ -1433,6 +2138,19 @@
                     const icon = this.escapeHtml(card?.icon || (type === 'trap' ? '☠️' : '✦'));
 
                     return `<span class="nb-card-icon-art nb-card-icon-art-${safeSize} ${type}"><span>${icon}</span></span>`;
+                },
+
+                effectCardArtHtml(card, type = 'spell') {
+                    if (card && card.image_url) {
+                        return card.image_url;
+                    }
+
+                    const safeCardId = this.escapeHtml(card?.id || 'unknown-card');
+                    const safeName = this.escapeHtml(card?.name || 'Kartu');
+                    const icon = this.escapeHtml(card?.icon || (type === 'trap' ? '☠️' : '✦'));
+                    const style = this.cardVisualStyle(card, type);
+
+                    return `<span class="nb-card-generated-art nb-card-effect-art ${type}" data-card-id="${safeCardId}" style="${style}"><span class="nb-card-effect-art-icon">${icon}</span><span class="nb-card-effect-art-name">${safeName}</span></span>`;
                 },
 
                 formatScore(value) {
@@ -1641,9 +2359,8 @@
                     if (targetedCards.includes(cardId)) {
                         const otherPlayers = this.players.filter(p => p.id !== this.currentPlayerId);
                         if (otherPlayers.length > 0) {
-                            const randomTarget = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
                             this.showInventoryModal = false;
-                            this.executeUseCard(cardId, { target_player_id: randomTarget.id, is_random: true });
+                            this.startTargetRoulette(cardId, otherPlayers);
                         } else {
                             this.notify('Tidak ada korban untuk ditarget!', 'error');
                         }
@@ -1651,6 +2368,120 @@
                     }
 
                     this.executeUseCard(cardId, {});
+                },
+
+                targetInitial(player) {
+                    const name = String(player?.name || '?').trim();
+                    return name ? name.charAt(0).toUpperCase() : '?';
+                },
+
+                playersForTargetGacha(players, selectedPlayer) {
+                    const others = players.filter(player => player.id !== selectedPlayer.id);
+                    const shuffled = others.sort(() => Math.random() - 0.5);
+                    const wheelPlayers = [selectedPlayer, ...shuffled].slice(0, 8);
+                    const total = Math.max(1, wheelPlayers.length);
+                    const selectedIndex = wheelPlayers.findIndex(player => player.id === selectedPlayer.id);
+                    const segmentAngles = wheelPlayers.map((_, index) => (360 / total) * index);
+                    const selectedAngle = segmentAngles[Math.max(0, selectedIndex)] || 0;
+
+                    return {
+                        wheelPlayers,
+                        segmentAngles,
+                        wheelRotation: 1800 - selectedAngle,
+                    };
+                },
+
+                startTargetRoulette(cardId, candidatePlayers) {
+                    if (this.targetRoulette.lockTimeout) {
+                        clearTimeout(this.targetRoulette.lockTimeout);
+                        this.targetRoulette.lockTimeout = null;
+                    }
+                    if (this.targetRoulette.timeout) {
+                        clearTimeout(this.targetRoulette.timeout);
+                        this.targetRoulette.timeout = null;
+                    }
+
+                    const card = this.cardCatalog.find(c => c.id === cardId) || {};
+                    const selectedPlayer = candidatePlayers[Math.floor(Math.random() * candidatePlayers.length)];
+
+                    this.isUsingCard = true;
+                    this.targetRoulette.show = false;
+                    this.targetRoulette.locked = false;
+                    this.targetRoulette.cardId = cardId;
+                    this.targetRoulette.cardName = card.name || cardId;
+                    const gachaWheel = this.playersForTargetGacha(candidatePlayers, selectedPlayer);
+
+                    this.targetRoulette.selectedPlayer = selectedPlayer;
+                    this.targetRoulette.wheelPlayers = gachaWheel.wheelPlayers;
+                    this.targetRoulette.segmentAngles = gachaWheel.segmentAngles;
+                    this.targetRoulette.wheelRotation = gachaWheel.wheelRotation;
+                    this.targetRoulette.animationKey += 1;
+
+                    this.$nextTick(() => {
+                        this.targetRoulette.show = true;
+                    });
+
+                    this.targetRoulette.lockTimeout = setTimeout(() => {
+                        this.targetRoulette.locked = true;
+                    }, 2050);
+
+                    this.targetRoulette.timeout = setTimeout(() => {
+                        this.targetRoulette.show = false;
+                        this.targetRoulette.timeout = null;
+                        this.targetRoulette.lockTimeout = null;
+                        this.executeUseCard(cardId, { target_player_id: selectedPlayer.id, is_random: true });
+                    }, 3050);
+                },
+
+                startBroadcastTargetRoulette(payload, onComplete = null) {
+                    if (this.targetRoulette.lockTimeout) {
+                        clearTimeout(this.targetRoulette.lockTimeout);
+                        this.targetRoulette.lockTimeout = null;
+                    }
+                    if (this.targetRoulette.timeout) {
+                        clearTimeout(this.targetRoulette.timeout);
+                        this.targetRoulette.timeout = null;
+                    }
+
+                    const card = this.cardCatalog.find(c => c.id === payload.cardId) || {};
+                    const selectedPlayer = this.players.find(player => player.id === payload.targetPlayerId) || {
+                        id: payload.targetPlayerId,
+                        name: payload.targetPlayerName || 'Target',
+                    };
+                    const candidatePlayers = this.players.filter(player => player.id !== payload.usedByPlayerId);
+                    const gachaWheel = this.playersForTargetGacha(
+                        candidatePlayers.some(player => player.id === selectedPlayer.id)
+                            ? candidatePlayers
+                            : [selectedPlayer, ...candidatePlayers],
+                        selectedPlayer
+                    );
+
+                    this.targetRoulette.show = false;
+                    this.targetRoulette.locked = false;
+                    this.targetRoulette.cardId = payload.cardId;
+                    this.targetRoulette.cardName = payload.cardName || card.name || payload.cardId || 'Kartu';
+                    this.targetRoulette.selectedPlayer = selectedPlayer;
+                    this.targetRoulette.wheelPlayers = gachaWheel.wheelPlayers;
+                    this.targetRoulette.segmentAngles = gachaWheel.segmentAngles;
+                    this.targetRoulette.wheelRotation = gachaWheel.wheelRotation;
+                    this.targetRoulette.animationKey += 1;
+
+                    this.$nextTick(() => {
+                        this.targetRoulette.show = true;
+                    });
+
+                    this.targetRoulette.lockTimeout = setTimeout(() => {
+                        this.targetRoulette.locked = true;
+                    }, 2050);
+
+                    this.targetRoulette.timeout = setTimeout(() => {
+                        this.targetRoulette.show = false;
+                        this.targetRoulette.timeout = null;
+                        this.targetRoulette.lockTimeout = null;
+                        if (typeof onComplete === 'function') {
+                            onComplete();
+                        }
+                    }, 3050);
                 },
 
                 async executeUseCard(cardId, payload = {}) {
@@ -1693,21 +2524,28 @@
                     }
                     const card = this.cardCatalog.find((item) => item.id === payload.cardId) || {};
                     const type = payload.cardType || card.type || 'spell';
+                    this.effectNotice.show = false;
                     this.effectNotice.type = type;
                     this.effectNotice.icon = card.icon || (type === 'trap' ? '!' : '✦');
                     this.effectNotice.cardName = payload.cardName || card.name || 'Kartu';
                     this.effectNotice.cardDescription = card.description || 'Efek kartu berhasil dijalankan.';
+                    const effectCard = { ...card, type, icon: card.icon || (type === 'trap' ? '☠️' : '✦') };
+                    this.effectNotice.cardArt = this.effectCardArtHtml(effectCard, type);
+                    this.effectNotice.cardStyle = this.cardVisualStyle(effectCard, type);
                     this.effectNotice.message = message;
                     this.effectNotice.usedByName = payload.usedByPlayerName || 'Pemain';
                     this.effectNotice.targetName = payload.targetPlayerName
                         || (payload.targetPlayerId ? this.nameById(payload.targetPlayerId) : null)
                         || (type === 'trap' ? 'Target tidak tercatat' : 'Diri sendiri / area efek');
                     this.effectNotice.isRandom = !!payload.isRandom;
-                    this.effectNotice.show = true;
+                    this.effectNotice.animationKey += 1;
                     this.deferCardEffectPlayerSync = true;
+                    this.$nextTick(() => {
+                        this.effectNotice.show = true;
+                    });
                     this.effectNotice.timeout = setTimeout(() => {
                         this.closeEffectNotice();
-                    }, 5000);
+                    }, 7000);
                 },
 
                 closeEffectNotice() {
