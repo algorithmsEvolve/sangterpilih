@@ -23,6 +23,7 @@
         .glass-panel {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -201,11 +202,14 @@
             border: 3px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 8px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.42);
+            transition: transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
             background-size: 200% 200%;
             display: flex;
             flex-direction: column;
+            contain: layout paint;
+            content-visibility: auto;
+            contain-intrinsic-size: 140px 224px;
         }
 
         .nb-card-shell.trap {
@@ -270,13 +274,13 @@
 
         .nb-effect-aura {
             position: absolute;
-            inset: -30%;
-            opacity: .42;
+            inset: -18%;
+            opacity: .28;
             pointer-events: none;
             background:
                 conic-gradient(from 0deg, transparent, rgba(255, 255, 255, .18), transparent 34%, rgba(255, 255, 255, .1), transparent 68%),
                 radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .12), transparent 42%);
-            animation: nb-effect-aura-spin 9s linear infinite;
+            animation: nb-effect-aura-spin 16s linear infinite;
         }
 
         .nb-effect-card-stage {
@@ -300,11 +304,11 @@
         }
 
         .nb-effect-card-stage::before {
-            width: 290px;
-            height: 290px;
+            width: 250px;
+            height: 250px;
             background: radial-gradient(circle, color-mix(in srgb, var(--nb-effect-primary) 26%, transparent), transparent 64%);
             opacity: .82;
-            animation: nb-effect-orb-pulse 2.8s ease-in-out infinite;
+            animation: nb-effect-orb-pulse 4.2s ease-in-out infinite;
         }
 
         .nb-effect-card-stage::after {
@@ -332,13 +336,13 @@
 
         .nb-effect-ring {
             position: absolute;
-            width: 318px;
-            height: 318px;
+            width: 280px;
+            height: 280px;
             border-radius: 9999px;
             border: 1px solid color-mix(in srgb, var(--nb-effect-primary) 70%, transparent);
             box-shadow: inset 0 0 24px color-mix(in srgb, var(--nb-effect-primary) 18%, transparent);
             transform: rotateX(68deg) rotateZ(0deg);
-            animation: nb-effect-ring-spin 5.2s linear infinite;
+            animation: nb-effect-ring-spin 9s linear infinite;
             opacity: .62;
             will-change: transform;
         }
@@ -371,7 +375,7 @@
             -webkit-backface-visibility: hidden;
             transform-style: preserve-3d;
             -webkit-transform-style: preserve-3d;
-            box-shadow: 0 24px 42px rgba(0, 0, 0, .52), 0 0 22px color-mix(in srgb, var(--nb-effect-primary) 28%, transparent);
+            box-shadow: 0 18px 32px rgba(0, 0, 0, .46), 0 0 16px color-mix(in srgb, var(--nb-effect-primary) 22%, transparent);
         }
 
         .nb-effect-card-back {
@@ -404,7 +408,7 @@
             background:
                 radial-gradient(circle at 22% 16%, color-mix(in srgb, var(--nb-effect-secondary) 34%, transparent), transparent 34%),
                 linear-gradient(155deg, color-mix(in srgb, var(--nb-effect-primary) 31%, #020617), #020617 42%, color-mix(in srgb, var(--nb-effect-deep) 85%, #000) 100%);
-            box-shadow: inset 0 0 0 7px rgba(255, 255, 255, .08), inset 0 0 34px color-mix(in srgb, var(--nb-effect-primary) 22%, transparent);
+            box-shadow: inset 0 0 0 7px rgba(255, 255, 255, .08), inset 0 0 22px color-mix(in srgb, var(--nb-effect-primary) 18%, transparent);
         }
 
         .nb-effect-card-front.spell-card {
@@ -450,7 +454,7 @@
             background:
                 radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--nb-effect-primary) 22%, transparent), transparent 48%),
                 #020617;
-            box-shadow: inset 0 0 28px rgba(0, 0, 0, .68), 0 0 24px color-mix(in srgb, var(--nb-effect-primary) 26%, transparent);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, .62), 0 0 14px color-mix(in srgb, var(--nb-effect-primary) 20%, transparent);
         }
 
         .nb-effect-card-art-frame .card-image,
@@ -486,7 +490,7 @@
             inset: 10%;
             border-radius: 9999px;
             border: 1px solid rgba(255, 255, 255, .26);
-            box-shadow: 0 0 28px var(--nb-card-glow, rgba(52, 211, 153, .5)), inset 0 0 30px rgba(255, 255, 255, .08);
+            box-shadow: 0 0 16px var(--nb-card-glow, rgba(52, 211, 153, .38)), inset 0 0 18px rgba(255, 255, 255, .07);
             transform: rotate(-18deg) scaleX(1.35);
         }
 
@@ -495,15 +499,14 @@
             position: absolute;
             inset: -40% -25%;
             background: repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, .08) 14px 16px);
-            mix-blend-mode: screen;
-            opacity: .7;
+            opacity: .45;
         }
 
         .nb-card-generated-art-icon {
             position: relative;
             z-index: 1;
             font-size: inherit;
-            text-shadow: 0 10px 18px rgba(0, 0, 0, .65), 0 0 18px var(--nb-card-glow, rgba(255, 255, 255, .45));
+            text-shadow: 0 8px 14px rgba(0, 0, 0, .6);
             transform: translateZ(22px);
         }
 
@@ -518,7 +521,7 @@
             z-index: 2;
             font-size: 5.2rem;
             line-height: 1;
-            text-shadow: 0 10px 20px rgba(0, 0, 0, .62), 0 0 22px var(--nb-card-glow, rgba(255, 255, 255, .45));
+            text-shadow: 0 8px 16px rgba(0, 0, 0, .6);
         }
 
         .nb-card-effect-art-name {
@@ -557,7 +560,7 @@
             height: 14px;
             border-radius: 9999px;
             background: var(--nb-effect-primary);
-            box-shadow: 0 0 16px 5px var(--nb-effect-glow);
+            box-shadow: 0 0 10px 3px var(--nb-effect-glow);
             opacity: 0;
             animation: nb-effect-sigil 1.55s ease-out .28s both;
         }
@@ -571,6 +574,40 @@
             position: relative;
             z-index: 20;
             animation: nb-effect-info-rise .52s cubic-bezier(.16, 1, .3, 1) .38s both;
+        }
+
+        .loadout-overlay {
+            background: rgba(15, 23, 42, .97);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+
+        .loadout-panel,
+        .loadout-card-grid,
+        .loadout-preview {
+            contain: layout paint;
+        }
+
+        .loadout-card-grid {
+            content-visibility: auto;
+            contain-intrinsic-size: 780px;
+        }
+
+        .loadout-card {
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        .loadout-card:hover {
+            box-shadow: 0 14px 24px rgba(0, 0, 0, .42);
+        }
+
+        @supports (-webkit-hyphens: none) {
+            .loadout-overlay,
+            .modal-backdrop-lite {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
         }
 
         .nb-target-roulette-panel {
@@ -1162,8 +1199,8 @@
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-            class="fixed inset-0 z-[155] flex items-center justify-center p-3 md:p-4 bg-slate-950/75 backdrop-blur-md overflow-y-auto">
-            <div class="nb-effect-burst nb-effect-arena max-w-5xl w-full rounded-[2rem] border p-4 md:p-6 shadow-2xl backdrop-blur-md overflow-visible relative my-8"
+            class="modal-backdrop-lite fixed inset-0 z-[155] flex items-center justify-center p-3 md:p-4 bg-slate-950/88 overflow-y-auto">
+            <div class="nb-effect-burst nb-effect-arena max-w-5xl w-full rounded-[2rem] border p-4 md:p-6 shadow-xl overflow-visible relative my-8"
                 :class="effectNotice.type === 'trap'
                     ? 'bg-gradient-to-br from-red-950/95 via-slate-950/95 to-red-900/80 border-red-400/60 text-red-50 shadow-red-900/30'
                     : 'bg-gradient-to-br from-emerald-950/95 via-slate-950/95 to-teal-900/80 border-emerald-400/60 text-emerald-50 shadow-emerald-900/30'">
@@ -1347,8 +1384,8 @@
                                         <h2 class="text-3xl font-black text-yellow-400 mb-2 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">Tebak Dadu!</h2>
                                         <p class="text-slate-300 mb-6 text-sm">Pilih Ganjil atau Genap. Benar = 0 Damage. Salah = 2x Damage!</p>
                                         <div class="grid grid-cols-2 gap-4">
-                                            <button @click="executeUseCard(activeCardIdToUse, { guess: 'odd' })" :disabled="isUsingCard" class="bg-indigo-600/50 hover:bg-indigo-500 border border-indigo-400 text-white font-bold py-4 rounded-xl transition-all">GANJIL</button>
-                                            <button @click="executeUseCard(activeCardIdToUse, { guess: 'even' })" :disabled="isUsingCard" class="bg-rose-600/50 hover:bg-rose-500 border border-rose-400 text-white font-bold py-4 rounded-xl transition-all">GENAP</button>
+                                                            <button @click="executeUseCard(activeCardIdToUse, { guess: 'odd' })" :disabled="isUsingCard" class="bg-indigo-600/50 hover:bg-indigo-500 border border-indigo-400 text-white font-bold py-4 rounded-xl transition-colors">GANJIL</button>
+                                                            <button @click="executeUseCard(activeCardIdToUse, { guess: 'even' })" :disabled="isUsingCard" class="bg-rose-600/50 hover:bg-rose-500 border border-rose-400 text-white font-bold py-4 rounded-xl transition-colors">GENAP</button>
                                         </div>
                                         <button @click="showGamblerModal = false" class="mt-4 text-slate-400 hover:text-white text-sm transition-colors">Batal Pakai</button>
                                     </div>
@@ -1363,7 +1400,7 @@
                                         <p class="text-slate-300 mb-6 text-sm">Siapa yang mau kamu jadikan target?</p>
                                         <div class="flex flex-col gap-3 max-h-[40vh] overflow-y-auto pr-2">
                                             <template x-for="p in players.filter(pl => pl.id !== currentPlayerId)" :key="p.id">
-                                                <button @click="executeUseCard(activeCardIdToUse, { target_player_id: p.id })" :disabled="isUsingCard" class="bg-slate-800/80 hover:bg-red-900/50 border border-slate-600 hover:border-red-500 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-between gap-3">
+                                                <button @click="executeUseCard(activeCardIdToUse, { target_player_id: p.id })" :disabled="isUsingCard" class="bg-slate-800/80 hover:bg-red-900/50 border border-slate-600 hover:border-red-500 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-between gap-3">
                                                     <span x-text="p.name.slice(0, 25)" class="truncate" :title="p.name"></span><span class="text-xs text-slate-400">Pilih Target</span>
                                                 </button>
                                             </template>
@@ -1618,9 +1655,9 @@
 
         <!-- Loadout Selection Modal (Survival Mode) -->
         <div x-show="status === 'selecting_cards'" x-cloak
-            class="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-xl">
+            class="loadout-overlay fixed inset-0 z-[140] flex items-center justify-center p-4">
             <div
-                class="w-full max-w-7xl h-full max-h-[92vh] flex flex-col glass-panel rounded-3xl p-6 border border-emerald-500/30 shadow-[0_0_80px_rgba(16,185,129,0.15)] relative">
+                class="loadout-panel w-full max-w-7xl h-full max-h-[92vh] flex flex-col rounded-3xl bg-slate-950/92 p-6 border border-emerald-500/30 shadow-[0_22px_60px_rgba(0,0,0,0.38)] relative">
 
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                     <div>
@@ -1637,7 +1674,7 @@
                             <p class="font-mono text-3xl font-bold text-yellow-300" x-text="formattedLoadoutTime()"></p>
                         </div>
                         <button @click="submitLoadout" :disabled="hasSelectedCards || isSubmittingLoadout"
-                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-8 py-4 rounded-xl font-bold text-base shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-8 py-4 rounded-xl font-bold text-base shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             <span
                                 x-text="hasSelectedCards ? 'Menunggu...' : (isSubmittingLoadout ? 'Menyimpan...' : 'KUNCI LOADOUT')"></span>
                         </button>
@@ -1664,11 +1701,11 @@
                                 <span class="text-red-300 font-bold" x-text="selectedTraps.length"></span> trap</p>
                         </div>
 
-                        <div class="flex-1 overflow-y-auto p-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="flex-1 overflow-y-auto p-4 overscroll-contain">
+                            <div class="loadout-card-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                                 <template x-for="card in loadoutCards()" :key="card.id">
                                     <button type="button" @click="previewLoadoutCard(card)"
-                                        class="nb-card-shell text-left cursor-pointer transition-all duration-200 min-h-[250px] p-3 hover:-translate-y-1"
+                                        class="loadout-card nb-card-shell text-left cursor-pointer min-h-[250px] p-3 hover:-translate-y-1"
                                         :class="[
                                             card.type === 'trap' ? 'trap' : 'spell',
                                             previewLoadoutCardId === card.id ? 'ring-4 ring-white/70' : '',
@@ -1696,7 +1733,7 @@
                         </div>
                     </div>
 
-                    <aside class="lg:w-1/3 rounded-2xl border border-white/10 bg-slate-950/45 p-5 min-h-[420px] max-h-full overflow-y-auto flex flex-col">
+                    <aside class="loadout-preview lg:w-1/3 rounded-2xl border border-white/10 bg-slate-950/45 p-5 min-h-[420px] max-h-full overflow-y-auto overscroll-contain flex flex-col">
                         <template x-if="selectedLoadoutCard()">
                             <div class="flex flex-col min-h-0 flex-1">
                                 <div class="flex items-center justify-between gap-3 mb-4">
