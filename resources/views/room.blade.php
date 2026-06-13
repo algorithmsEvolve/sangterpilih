@@ -353,8 +353,13 @@
             width: min(230px, 68vw);
             aspect-ratio: 5 / 8;
             transform-style: preserve-3d;
-            animation: nb-effect-card-summon 1.65s cubic-bezier(.2, .85, .2, 1) both, nb-effect-card-float 4.2s ease-in-out 1.65s infinite;
+            -webkit-transform-style: preserve-3d;
+            animation: nb-effect-card-summon 1.65s cubic-bezier(.2, .85, .2, 1) both;
             will-change: transform, opacity;
+        }
+
+        .nb-effect-card-3d.is-floating {
+            animation: nb-effect-card-float 4.2s ease-in-out infinite;
         }
 
         .nb-effect-card-face {
@@ -363,12 +368,16 @@
             overflow: hidden;
             border-radius: 18px;
             backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
             transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
             box-shadow: 0 24px 42px rgba(0, 0, 0, .52), 0 0 22px color-mix(in srgb, var(--nb-effect-primary) 28%, transparent);
         }
 
         .nb-effect-card-back {
             display: flex;
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
             align-items: center;
             justify-content: center;
             border: 4px solid #d6a457;
@@ -389,7 +398,8 @@
         }
 
         .nb-effect-card-front {
-            transform: rotateY(180deg);
+            transform: translateZ(1px);
+            -webkit-transform: translateZ(1px);
             border: 3px solid color-mix(in srgb, var(--nb-effect-primary) 86%, white 14%);
             background:
                 radial-gradient(circle at 22% 16%, color-mix(in srgb, var(--nb-effect-secondary) 34%, transparent), transparent 34%),
@@ -450,6 +460,10 @@
             height: 100%;
             object-fit: cover;
             display: block;
+            transform: translateZ(2px);
+            -webkit-transform: translateZ(2px);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
 
         .nb-card-generated-art {
@@ -791,16 +805,16 @@
         }
 
         @keyframes nb-effect-card-summon {
-            0% { opacity: 0; transform: translate3d(0, 58px, -120px) rotateX(54deg) rotateY(-160deg) rotateZ(-8deg) scale(.72); }
-            22% { opacity: 1; transform: translate3d(0, -14px, 30px) rotateX(38deg) rotateY(-120deg) rotateZ(6deg) scale(.92); }
-            58% { transform: translate3d(0, -4px, 76px) rotateX(10deg) rotateY(34deg) rotateZ(-2deg) scale(1.04); }
-            76% { transform: translate3d(0, 0, 44px) rotateX(3deg) rotateY(190deg) rotateZ(1deg) scale(1.03); }
-            100% { opacity: 1; transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(180deg) rotateZ(0deg) scale(1); }
+            0% { opacity: 0; transform: translate3d(0, 58px, -120px) rotateX(54deg) rotateY(200deg) rotateZ(-8deg) scale(.72); }
+            22% { opacity: 1; transform: translate3d(0, -14px, 30px) rotateX(38deg) rotateY(240deg) rotateZ(6deg) scale(.92); }
+            58% { transform: translate3d(0, -4px, 76px) rotateX(10deg) rotateY(326deg) rotateZ(-2deg) scale(1.04); }
+            76% { transform: translate3d(0, 0, 44px) rotateX(3deg) rotateY(350deg) rotateZ(1deg) scale(1.03); }
+            100% { opacity: 1; transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(360deg) rotateZ(0deg) scale(1); }
         }
 
         @keyframes nb-effect-card-float {
-            0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(180deg) rotateZ(0deg); }
-            50% { transform: translateY(-7px) rotateX(2deg) rotateY(182deg) rotateZ(-.5deg); }
+            0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(360deg) rotateZ(0deg); }
+            50% { transform: translateY(-7px) rotateX(2deg) rotateY(362deg) rotateZ(-.5deg); }
         }
 
         @keyframes nb-effect-card-sheen {
@@ -923,13 +937,154 @@
         .nb-card-icon-art-lg {
             font-size: 5.25rem;
         }
+
+
+        .arena-shell {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 50% 12%, rgba(20, 184, 166, 0.22), transparent 32%),
+                radial-gradient(circle at 10% 85%, rgba(239, 68, 68, 0.18), transparent 28%),
+                radial-gradient(circle at 90% 75%, rgba(245, 158, 11, 0.16), transparent 28%),
+                linear-gradient(145deg, #05070b 0%, #0d1420 42%, #020617 100%);
+        }
+
+        .arena-shell::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: .24;
+            background-image:
+                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: radial-gradient(circle at center, #000, transparent 78%);
+        }
+
+        .arena-wrap {
+            perspective: 1400px;
+        }
+
+        .battle-board {
+            position: relative;
+            min-height: 660px;
+            margin-bottom: 56px;
+            border-radius: 38px;
+            overflow: visible;
+            background:
+                radial-gradient(ellipse at center, rgba(251, 191, 36, .16), transparent 38%),
+                linear-gradient(90deg, rgba(8, 13, 20, .94), rgba(23, 18, 13, .9) 17%, rgba(92, 62, 34, .92) 50%, rgba(23, 18, 13, .9) 83%, rgba(8, 13, 20, .94)),
+                repeating-linear-gradient(90deg, #5c3920 0 90px, #684326 90px 180px);
+            border: 1px solid rgba(125, 211, 252, .25);
+            box-shadow: 0 35px 100px rgba(0, 0, 0, .62), inset 0 0 0 2px rgba(255, 255, 255, .04);
+            transform: rotateX(7deg);
+            transform-origin: center top;
+        }
+
+        .battle-board::before {
+            content: "";
+            position: absolute;
+            inset: 34px;
+            border-radius: 30px;
+            border: 2px solid rgba(34, 211, 238, .78);
+            box-shadow: 0 0 22px rgba(34, 211, 238, .7), inset 0 0 36px rgba(34, 211, 238, .18);
+            pointer-events: none;
+        }
+
+        .battle-board::after {
+            content: "";
+            position: absolute;
+            left: 7%;
+            right: 7%;
+            top: 50%;
+            border-top: 2px solid rgba(15, 23, 42, .65);
+            box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 14px 36px rgba(0,0,0,.45);
+            pointer-events: none;
+        }
+
+        .arena-corner {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 30px;
+            background: linear-gradient(145deg, rgba(15,23,42,.95), rgba(2,6,23,.72));
+            border: 1px solid rgba(255,255,255,.12);
+            box-shadow: inset 0 0 28px rgba(0,0,0,.7), 0 20px 40px rgba(0,0,0,.34);
+        }
+
+        .arena-card-avatar {
+            transform-style: preserve-3d;
+            transform: rotateX(-9deg) translateZ(24px);
+            transition: transform .24s ease, filter .24s ease;
+            min-height: 112px;
+        }
+
+        .arena-card-avatar.active {
+            filter: drop-shadow(0 0 20px rgba(34, 211, 238, .8));
+            transform: rotateX(-9deg) translateZ(36px) scale(1.04);
+        }
+
+        .score-delta-slot {
+            min-height: 1rem;
+        }
+
+        .player-token {
+            background: linear-gradient(160deg, rgba(15, 23, 42, .98), rgba(30, 41, 59, .86));
+            border: 1px solid rgba(148, 163, 184, .22);
+            box-shadow: 0 18px 36px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+
+        .hand-zone {
+            position: relative;
+            z-index: 40;
+            background: linear-gradient(180deg, rgba(2, 6, 23, .2), rgba(2, 6, 23, .88));
+            border-top: 1px solid rgba(34, 211, 238, .22);
+            box-shadow: 0 -22px 50px rgba(2, 6, 23, .78);
+        }
+
+        .hand-card {
+            position: relative;
+            z-index: 41;
+            width: 110px;
+            height: 168px;
+            flex: 0 0 108px;
+            transform: translateY(0) rotate(var(--tilt, 0deg));
+            transition: transform .2s ease, filter .2s ease;
+        }
+
+        .hand-card:hover {
+            transform: translateY(-10px) rotate(0deg) scale(1.04);
+            z-index: 55;
+            filter: drop-shadow(0 16px 24px rgba(34, 211, 238, .22));
+        }
+
+        .command-orb {
+            box-shadow: 0 0 26px rgba(34, 211, 238, .45), inset 0 0 30px rgba(251, 146, 60, .18);
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        @media (max-width: 900px) {
+            .battle-board {
+                min-height: 780px;
+                transform: none;
+            }
+
+            .battle-board::before {
+                inset: 18px;
+            }
+        }
     </style>
 </head>
 
-<body
-    class="min-h-screen flex flex-col p-6 items-center relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-black">
+<body class="arena-shell min-h-screen p-3 text-white md:p-6">
 
-    <div x-data="gameClient()" x-init="initEcho()" class="w-full max-w-5xl z-10">
+    <div x-data="gameClient()" x-init="initEcho()" class="relative z-10 mx-auto w-full max-w-7xl">
 
         <!-- Global loading: start game / leave room (DB + redirect) -->
         <div x-show="loadingStart || loadingLeave" x-cloak x-transition:enter="transition ease-out duration-300"
@@ -1029,7 +1184,7 @@
                         <span class="nb-effect-sigil"></span>
                         <span class="nb-effect-sigil"></span>
 
-                        <div class="nb-effect-card-3d" :key="effectNotice.animationKey">
+                        <div class="nb-effect-card-3d" :class="{'is-floating': effectNotice.isFloating}" :key="effectNotice.animationKey">
                             <div class="nb-effect-card-face nb-effect-card-back"></div>
                             <div class="nb-effect-card-face nb-effect-card-front" :class="effectNotice.type === 'trap' ? 'trap-card' : 'spell-card'">
                                 <div class="nb-effect-card-title" x-text="effectNotice.cardName"></div>
@@ -1107,311 +1262,231 @@
             </div>
         </div>
 
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-10 w-full glass-panel px-6 py-4 rounded-xl">
-            <div>
-                <h1
-                    class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">
-                    Sang Terpilih @hasSection('mode_name')<span class="text-xl ml-2 text-pink-300">-
-                    @yield('mode_name')</span>@endif</h1>
-                <button @click="showHistoryModal = true"
-                    class="mt-2 text-xs bg-slate-800/70 border border-violet-400/30 hover:border-violet-300 hover:bg-slate-700/70 px-3 py-1.5 rounded-full text-violet-200 transition">
-                    Action History
-                </button>
-                <p class="text-slate-400">Room: <span class="text-white font-bold">{{ $room->code }}</span></p>
-                <p class="text-xs text-slate-500 mt-1" x-show="status === 'playing'">Ronde <span
-                        class="text-white font-bold" x-text="currentRound"></span> / <span x-text="totalRounds"></span>
-                </p>
-            </div>
-            <div class="text-right flex items-center space-x-4">
-                <p class="text-slate-400">You are <span
-                        class="font-bold text-violet-400 truncate max-w-[180px] inline-block align-bottom" title="{{ $currentPlayer->name }}">{{ Str::limit($currentPlayer->name, 25, '') }}</span></p>
-
-                <button x-show="status === 'waiting'" @click="leaveRoom" :disabled="loadingLeave || loadingStart"
-                    class="text-red-400 hover:text-white transition text-xs font-bold border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/80 shadow-md disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
-                    <span x-show="loadingLeave" class="nb-btn-spinner"></span>
-                    <span x-text="loadingLeave ? 'Keluar…' : 'Keluar Room'"></span>
-                </button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Sidebar: Player List -->
-            <div class="glass-panel rounded-2xl p-6 h-full flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-pink-400 border-b border-white/10 pb-2">Players</h2>
-                <ul class="space-y-3 flex-1 overflow-y-auto">
-                    <template x-for="p in players" :key="p.id">
-                        <li class="flex justify-between items-center bg-slate-800/50 px-4 py-3 rounded-lg border border-slate-700/50"
-                            :class="{'ring-2 ring-violet-500 bg-violet-900/30': status === 'playing' && currentTurn === p.id}">
-                            <div class="flex flex-col gap-1">
-                                <div class="flex items-center gap-2 relative min-w-0">
-                                    <span class="w-3 h-3 rounded-full shrink-0"
-                                        :class="p.id === currentTurn && status === 'playing' ? 'bg-green-400 animate-pulse' : 'bg-slate-600'"></span>
-
-                                    <!-- Trap Countdown Icon -->
-                                    <template x-if="getTrapTurns(p) > 0">
-                                        <div class="flex items-center justify-center w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold border border-red-400 shadow-[0_0_8px_rgba(220,38,38,0.5)] animate-bounce shrink-0" title="Trap is going to affect this player!">
-                                            <span x-text="getTrapTurns(p)"></span>
-                                        </div>
-                                    </template>
-
-                                    <span x-text="p.name.slice(0, 25)" class="truncate inline-block align-bottom" :title="p.name"
-                                        :class="{'font-bold text-violet-300': p.id == currentPlayerId}"></span>
-                                    <span x-show="p.is_host"
-                                        class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded ml-1 shrink-0">Host</span>
-                                </div>
-                                <div x-show="p.active_buffs && p.active_buffs.length > 0" class="flex flex-wrap gap-1 ml-5">
-                                    <template x-for="buff in p.active_buffs">
-                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-300 border border-slate-500/30 font-mono" x-text="buff.split('_').join(' ').split(':').join(' ').toUpperCase()"></span>
-                                    </template>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-[10px] text-slate-400 font-normal uppercase tracking-wider mb-0.5">
-                                    @yield('score_label', 'Score')</div>
-                                <div class="font-bold leading-none font-mono tabular-nums transition-colors"
-                                    :class="p.scoreDelta < 0 ? 'text-red-300' : (p.scoreDelta > 0 ? 'text-emerald-300' : 'text-amber-400')"
-                                    x-text="status !== 'waiting' ? formatScore(p.displayScore ?? p.score) : '-'"></div>
-                                <div x-show="status !== 'waiting' && p.scoreDelta !== 0" x-transition
-                                    class="text-[10px] font-bold font-mono mt-1"
-                                    :class="p.scoreDelta < 0 ? 'text-red-400' : 'text-emerald-400'"
-                                    x-text="(p.scoreDelta > 0 ? '+' : '') + formatScore(p.scoreDelta)"></div>
-                            </div>
-                        </li>
-                    </template>
-                </ul>
-
-                <!-- Host Controls -->
-                <div x-show="isHost && status === 'waiting'" class="mt-6">
-                    <button @click="startGame" :disabled="loadingStart || loadingLeave"
-                        class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 py-3 rounded-xl font-bold text-lg shadow-lg hover:shadow-green-500/25 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                        <span x-show="loadingStart" class="nb-btn-spinner"></span>
-                        <span x-text="loadingStart ? 'Memulai…' : 'Start Game'"></span>
+        <!-- 3D Card Battle Arena -->
+        <div class="arena-wrap pb-10">
+            <header class="mb-5 flex flex-col gap-4 rounded-[2rem] border border-cyan-300/20 bg-slate-950/70 px-5 py-4 shadow-2xl backdrop-blur-xl md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.38em] text-cyan-200/70">Sang Terpilih Arena</p>
+                    <h1 class="mt-1 text-3xl font-black tracking-tight text-white md:text-5xl">
+                        Room <span class="text-cyan-300">{{ $room->code }}</span>
+                        @hasSection('mode_name')<span class="block text-sm uppercase tracking-[0.25em] text-amber-200 md:inline md:text-base">@yield('mode_name')</span>@endif
+                    </h1>
+                    <p class="mt-2 text-xs text-slate-400">Duel server-authoritative • Kamu: <span class="font-bold text-amber-200" title="{{ $currentPlayer->name }}">{{ Str::limit($currentPlayer->name, 25, '') }}</span></p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 md:justify-end">
+                    <button @click="showHistoryModal = true" class="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-cyan-100 transition hover:bg-cyan-300/20">History</button>
+                    <button x-show="mode !== 'survival' && status === 'playing'" @click="showShopModal = true" class="rounded-full border border-indigo-300/25 bg-indigo-400/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-indigo-100 transition hover:bg-indigo-300/20">Shop</button>
+                    <button @click="showInventoryModal = true" class="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-amber-100 transition hover:bg-amber-300/20">Inventory <span class="text-amber-300" x-text="myInventory.length"></span></button>
+                    <button x-show="status === 'waiting'" @click="leaveRoom" :disabled="loadingLeave || loadingStart" class="inline-flex items-center gap-2 rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-100 transition hover:bg-red-500/25 disabled:opacity-50">
+                        <span x-show="loadingLeave" class="nb-btn-spinner"></span>
+                        <span x-text="loadingLeave ? 'Keluar…' : 'Keluar Room'"></span>
                     </button>
-                    <p class="text-xs text-slate-400 text-center mt-2">New players won't be able to join</p>
                 </div>
-            </div>
+            </header>
 
-            <!-- Main Area -->
-            <div
-                class="md:col-span-2 glass-panel rounded-2xl p-8 flex flex-col items-center justify-center min-h-[400px] relative">
+            <section class="battle-board">
+                <div class="arena-corner left-4 top-4 hidden md:block"></div>
+                <div class="arena-corner right-4 top-4 hidden md:block"></div>
+                <div class="arena-corner bottom-4 left-4 hidden md:block"></div>
+                <div class="arena-corner bottom-4 right-4 hidden md:block"></div>
 
-                <!-- Waiting State -->
-                <div x-show="status === 'waiting'" class="text-center animate-pulse">
-                    <div class="text-6xl mb-4">⏳</div>
-                    <h2 class="text-2xl font-bold text-slate-300 mb-2">Waiting for Host to start...</h2>
-                    <p class="text-slate-400">Invite friends with code: <span
-                            class="text-white font-bold">{{ $room->code }}</span></p>
-                </div>
-
-                <!-- Playing State -->
-                <div x-show="status === 'playing'"
-                    class="w-full flex flex-col items-center justify-center text-center relative">
-
-                    <!-- Gambler's Shield Modal -->
-                    <div x-show="showGamblerModal" x-cloak
-                        class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
-                        <div @click.outside="showGamblerModal = false"
-                            class="glass-panel p-8 rounded-3xl max-w-sm w-full border border-yellow-500/30 text-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent"></div>
-                            <div class="relative z-10">
-                                <h2
-                                    class="text-3xl font-black text-yellow-400 mb-2 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">
-                                    Tebak Dadu!</h2>
-                                <p class="text-slate-300 mb-6 text-sm">Pilih Ganjil atau Genap. Benar = 0 Damage. Salah
-                                    = 2x Damage!</p>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <button @click="executeUseCard(activeCardIdToUse, { guess: 'odd' })"
-                                        :disabled="isUsingCard"
-                                        class="bg-indigo-600/50 hover:bg-indigo-500 border border-indigo-400 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.6)]">
-                                        GANJIL (1, 3, 5)
-                                    </button>
-                                    <button @click="executeUseCard(activeCardIdToUse, { guess: 'even' })"
-                                        :disabled="isUsingCard"
-                                        class="bg-rose-600/50 hover:bg-rose-500 border border-rose-400 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(225,29,72,0.3)] hover:shadow-[0_0_25px_rgba(225,29,72,0.6)]">
-                                        GENAP (2, 4, 6)
-                                    </button>
+                <div class="relative z-10 grid min-h-[660px] grid-rows-[auto_1fr_auto] p-4 md:p-8">
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                        <template x-for="(p, index) in players" :key="p.id">
+                            <article class="player-token arena-card-avatar rounded-2xl p-3" :class="{'active ring-2 ring-cyan-300/80': status === 'playing' && currentTurn === p.id}">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex min-w-0 items-center gap-3">
+                                        <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-cyan-300/25 to-amber-300/10 text-lg font-black text-white" x-text="(p.name || '?').slice(0, 1).toUpperCase()"></div>
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="h-2.5 w-2.5 rounded-full" :class="p.id === currentTurn && status === 'playing' ? 'bg-cyan-300 animate-pulse' : 'bg-slate-600'"></span>
+                                                <p class="truncate text-sm font-black text-white" x-text="p.name.slice(0, 25)" :title="p.name"></p>
+                                                <span x-show="p.is_host" class="rounded bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-black text-amber-200">HOST</span>
+                                            </div>
+                                            <p class="text-[10px] uppercase tracking-wider text-slate-400" x-show="p.id == currentPlayerId">Your seat</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-[9px] uppercase tracking-[0.22em] text-slate-400">@yield('score_label', 'Score')</p>
+                                        <p class="font-mono text-lg font-black tabular-nums" :class="p.scoreDelta < 0 ? 'text-red-300' : (p.scoreDelta > 0 ? 'text-emerald-300' : 'text-amber-200')" x-text="status !== 'waiting' ? formatScore(p.displayScore ?? p.score) : '-'"></p>
+                                        <p class="score-delta-slot font-mono text-[10px] font-black" :class="p.scoreDelta < 0 ? 'text-red-400' : 'text-emerald-400'" x-text="status !== 'waiting' && p.scoreDelta !== 0 ? ((p.scoreDelta > 0 ? '+' : '') + formatScore(p.scoreDelta)) : ''"></p>
+                                    </div>
                                 </div>
-                                <button @click="showGamblerModal = false"
-                                    class="mt-4 text-slate-400 hover:text-white text-sm transition-colors">Batal
-                                    Pakai</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Target Player Modal (Blood Sacrifice) -->
-                    <div x-show="showTargetModal" x-cloak
-                        class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
-                        <div @click.outside="showTargetModal = false"
-                            class="glass-panel p-8 rounded-3xl max-w-sm w-full border border-red-500/30 text-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent"></div>
-                            <div class="relative z-10">
-                                <h2
-                                    class="text-3xl font-black text-red-400 mb-2 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]">
-                                    Pilih Korban</h2>
-                                <p class="text-slate-300 mb-6 text-sm">Siapa yang mau kamu jadikan target?</p>
-
-                                <div class="flex flex-col gap-3 max-h-[40vh] overflow-y-auto pr-2">
-                                    <template x-for="p in players.filter(pl => pl.id !== currentPlayerId)" :key="p.id">
-                                        <button @click="executeUseCard(activeCardIdToUse, { target_player_id: p.id })"
-                                            :disabled="isUsingCard"
-                                            class="bg-slate-800/80 hover:bg-red-900/50 border border-slate-600 hover:border-red-500 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-between gap-3">
-                                            <span x-text="p.name.slice(0, 25)" class="truncate inline-block align-bottom" :title="p.name"></span>
-                                            <span class="text-xs text-slate-400 shrink-0">Pilih Target</span>
-                                        </button>
+                                <div class="mt-2 flex flex-wrap gap-1" x-show="p.active_buffs && p.active_buffs.length > 0">
+                                    <template x-for="buff in p.active_buffs">
+                                        <span class="rounded border border-cyan-200/15 bg-cyan-200/10 px-1.5 py-0.5 text-[9px] font-mono text-cyan-100" x-text="buff.split('_').join(' ').split(':').join(' ').toUpperCase()"></span>
                                     </template>
-                                    <div x-show="players.filter(pl => pl.id !== currentPlayerId).length === 0"
-                                        class="text-slate-500 text-sm py-4">
-                                        Gak ada pemain lain buat dijadiin korban.
-                                    </div>
                                 </div>
-                                <button @click="showTargetModal = false"
-                                    class="mt-6 text-slate-400 hover:text-white text-sm transition-colors">Batal
-                                    Pakai</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Compact roll request feedback (DB round-trip) -->
-                    <div x-show="isRolling" x-transition
-                        class="absolute top-0 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-full bg-slate-900/90 border border-pink-500/30 text-pink-200 text-sm font-medium shadow-lg backdrop-blur-sm flex items-center gap-2">
-                        <span class="relative flex h-2 w-2">
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
-                        </span>
-                        Mengirim lemparan ke server…
-                    </div>
-
-                    <div class="mb-12 mt-4 flex justify-center gap-6">
-                        <div x-show="rollResultNotice.show" x-cloak
-                            class="nb-roll-result-burst pointer-events-none absolute left-1/2 top-[38%] z-20 text-center">
-                            <p class="text-xs uppercase tracking-[0.3em] text-yellow-200 font-black drop-shadow-lg">Rolled</p>
-                            <div class="text-7xl md:text-8xl font-black text-yellow-300 drop-shadow-[0_0_26px_rgba(250,204,21,0.75)]"
-                                x-text="rollResultNotice.value"></div>
-                        </div>
-                        <template x-for="(diceVal, idx) in visibleDiceValues()" :key="idx">
-                            <div class="scene">
-                                <!-- Alpine classes apply the 3D rotation logic -->
-                                <div class="dice" :class="[
-                                    isAnimating ? 'rolling' : '',
-                                    diceVal > 0 && !isAnimating ? 'show-' + diceVal : 'show-1'
-                                ]">
-                                    <div class="dice-face face-1">
-                                        <div class="dot" style="grid-area: 2/2"></div>
-                                    </div>
-                                <div class="dice-face face-2">
-                                    <div class="dot" style="grid-area: 1/1"></div>
-                                    <div class="dot" style="grid-area: 3/3"></div>
-                                </div>
-                                <div class="dice-face face-3">
-                                    <div class="dot" style="grid-area: 1/1"></div>
-                                    <div class="dot" style="grid-area: 2/2"></div>
-                                    <div class="dot" style="grid-area: 3/3"></div>
-                                </div>
-                                <div class="dice-face face-4">
-                                    <div class="dot" style="grid-area: 1/1"></div>
-                                    <div class="dot" style="grid-area: 1/3"></div>
-                                    <div class="dot" style="grid-area: 3/1"></div>
-                                    <div class="dot" style="grid-area: 3/3"></div>
-                                </div>
-                                <div class="dice-face face-5">
-                                    <div class="dot" style="grid-area: 1/1"></div>
-                                    <div class="dot" style="grid-area: 1/3"></div>
-                                    <div class="dot" style="grid-area: 2/2"></div>
-                                    <div class="dot" style="grid-area: 3/1"></div>
-                                    <div class="dot" style="grid-area: 3/3"></div>
-                                </div>
-                                <div class="dice-face face-6">
-                                    <div class="dot" style="grid-area: 1/1"></div>
-                                    <div class="dot" style="grid-area: 2/1"></div>
-                                    <div class="dot" style="grid-area: 3/1"></div>
-                                    <div class="dot" style="grid-area: 1/3"></div>
-                                    <div class="dot" style="grid-area: 2/3"></div>
-                                    <div class="dot" style="grid-area: 3/3"></div>
-                                </div>
-                                </div>
-                            </div>
+                                <template x-if="getTrapTurns(p) > 0">
+                                    <div class="mt-2 inline-flex items-center gap-1 rounded-full border border-red-300/30 bg-red-500/15 px-2 py-1 text-[10px] font-black text-red-100">💣 Trap <span x-text="getTrapTurns(p)"></span></div>
+                                </template>
+                            </article>
                         </template>
                     </div>
 
-                    <h2 class="text-3xl font-extrabold mb-2 text-white">
-                        <span x-show="currentTurn === currentPlayerId" class="text-green-400">It's Your Turn!</span>
-                        <span x-show="currentTurn !== currentPlayerId">Waiting for <span class="text-violet-400 truncate max-w-[200px] inline-block align-bottom"
-                                x-text="getCurrentPlayerName().slice(0, 25)" :title="getCurrentPlayerName()"></span>...</span>
-                    </h2>
-                    <p class="text-slate-400 mb-8" x-show="hasLastRoll()">
-                        <span class="font-bold text-white truncate max-w-[200px] inline-block align-bottom" x-text="lastRollerName.slice(0, 25)" :title="lastRollerName"></span> just rolled a <span
-                            class="font-bold text-yellow-400" x-text="recentDice.join(' & ')"></span>!
-                    </p>
+                    <div class="relative flex items-center justify-center py-8 text-center">
+                        <div x-show="status === 'waiting'" class="mx-auto max-w-xl rounded-[2rem] border border-cyan-300/25 bg-slate-950/65 p-8 shadow-2xl backdrop-blur-md">
+                            <div class="text-7xl">🕯️</div>
+                            <h2 class="mt-4 text-3xl font-black text-white">Arena menunggu imam...</h2>
+                            <p class="mt-2 text-slate-300">Bagikan kode <span class="font-black text-cyan-200">{{ $room->code }}</span> ke pemain lain.</p>
+                            <div x-show="isHost" class="mt-6">
+                                <button @click="startGame" :disabled="loadingStart || loadingLeave" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-8 py-4 text-lg font-black text-white shadow-lg shadow-cyan-500/20 transition hover:scale-105 disabled:opacity-60">
+                                    <span x-show="loadingStart" class="nb-btn-spinner"></span>
+                                    <span x-text="loadingStart ? 'Memulai…' : 'Start Game'"></span>
+                                </button>
+                                <p class="mt-2 text-xs text-slate-400">New players won't be able to join</p>
+                            </div>
+                        </div>
 
-                    <div class="flex gap-3 mb-4">
-                        <button x-show="mode !== 'survival'" @click="showShopModal = true"
-                            class="px-5 py-2 rounded-full bg-indigo-500/20 border border-indigo-400/40 hover:bg-indigo-400/25 text-indigo-100 text-sm font-bold transition">
-                            Shop
-                        </button>
-                        <button @click="showInventoryModal = true"
-                            class="px-5 py-2 rounded-full bg-slate-500/20 border border-slate-300/30 hover:bg-slate-400/25 text-slate-100 text-sm font-bold transition">
-                            Inventory
-                        </button>
-                    </div>
-                    <p class="text-xs text-slate-400 mb-4" x-show="currentTurn === currentPlayerId">
-                        Lempar dadu dulu, kalau udah baru pencet <span class="text-emerald-300 font-semibold">Akhiri
-                            Giliran</span>.
-                    </p>
-
-                    <button x-show="currentTurn === currentPlayerId" @click="rollDice"
-                        :disabled="isRolling || isAnimating || (me() && me().hasRolledThisTurn)"
-                        class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-12 py-4 rounded-full font-bold text-2xl shadow-xl hover:shadow-pink-500/50 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-3">
-                        <span x-show="isRolling" class="nb-btn-spinner"></span>
-                        <span x-text="isRolling ? 'Rolling…' : 'ROLL DICE'"></span>
-                    </button>
-
-                    <button x-show="currentTurn === currentPlayerId" @click="endTurn"
-                        :disabled="isEndingTurn || !me() || !me().hasRolledThisTurn"
-                        class="mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-10 py-3 rounded-full font-bold text-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2">
-                        <span x-show="isEndingTurn" class="nb-btn-spinner"></span>
-                        <span x-text="isEndingTurn ? 'Mengakhiri…' : 'Akhiri Giliran'"></span>
-                    </button>
-                </div>
-
-                <!-- Finished State -->
-                <div x-show="status === 'finished'" class="w-full text-center" x-cloak>
-                    <div class="text-6xl mb-6">🏆</div>
-                    <h2
-                        class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mb-6 drop-shadow-lg">
-                        Game Over!</h2>
-
-                    <div class="bg-black/40 rounded-xl p-6 border border-yellow-500/30 max-w-md mx-auto">
-                        <h3 class="text-xl text-yellow-400 font-bold mb-4">Leaderboard</h3>
-                        <ul class="space-y-2 text-left">
-                            <template x-for="(bp, index) in leaderboard" :key="index">
-                                <li class="flex justify-between items-center py-2 border-b border-white/10 last:border-0"
-                                    :class="{'text-yellow-300 transform scale-110 font-bold': index === 0}">
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-2xl"
-                                            x-text="index === 0 ? '👑' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : ''))"></span>
-                                        <span class="text-lg truncate max-w-[220px] inline-block align-bottom" x-text="bp.name.slice(0, 25)" :title="bp.name"></span>
+                        <div x-show="status === 'playing'" class="relative w-full">
+                            <!-- Gambler's Shield Modal -->
+                            <div x-show="showGamblerModal" x-cloak class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+                                <div @click.outside="showGamblerModal = false" class="glass-panel p-8 rounded-3xl max-w-sm w-full border border-yellow-500/30 text-center relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent"></div>
+                                    <div class="relative z-10">
+                                        <h2 class="text-3xl font-black text-yellow-400 mb-2 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">Tebak Dadu!</h2>
+                                        <p class="text-slate-300 mb-6 text-sm">Pilih Ganjil atau Genap. Benar = 0 Damage. Salah = 2x Damage!</p>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <button @click="executeUseCard(activeCardIdToUse, { guess: 'odd' })" :disabled="isUsingCard" class="bg-indigo-600/50 hover:bg-indigo-500 border border-indigo-400 text-white font-bold py-4 rounded-xl transition-all">GANJIL</button>
+                                            <button @click="executeUseCard(activeCardIdToUse, { guess: 'even' })" :disabled="isUsingCard" class="bg-rose-600/50 hover:bg-rose-500 border border-rose-400 text-white font-bold py-4 rounded-xl transition-all">GENAP</button>
+                                        </div>
+                                        <button @click="showGamblerModal = false" class="mt-4 text-slate-400 hover:text-white text-sm transition-colors">Batal Pakai</button>
                                     </div>
-                                    <div class="text-right">
-                                        <div
-                                            class="text-[10px] text-yellow-500/70 font-normal uppercase tracking-wider mb-0.5">
-                                            @yield('score_label', 'Score')</div>
-                                        <div class="font-black text-xl leading-none" x-text="bp.score"></div>
+                                </div>
+                            </div>
+
+                            <!-- Target Player Modal (Blood Sacrifice) -->
+                            <div x-show="showTargetModal" x-cloak class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+                                <div @click.outside="showTargetModal = false" class="glass-panel p-8 rounded-3xl max-w-sm w-full border border-red-500/30 text-center relative overflow-hidden">
+                                    <div class="relative z-10">
+                                        <h2 class="text-3xl font-black text-red-400 mb-2">Pilih Korban</h2>
+                                        <p class="text-slate-300 mb-6 text-sm">Siapa yang mau kamu jadikan target?</p>
+                                        <div class="flex flex-col gap-3 max-h-[40vh] overflow-y-auto pr-2">
+                                            <template x-for="p in players.filter(pl => pl.id !== currentPlayerId)" :key="p.id">
+                                                <button @click="executeUseCard(activeCardIdToUse, { target_player_id: p.id })" :disabled="isUsingCard" class="bg-slate-800/80 hover:bg-red-900/50 border border-slate-600 hover:border-red-500 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-between gap-3">
+                                                    <span x-text="p.name.slice(0, 25)" class="truncate" :title="p.name"></span><span class="text-xs text-slate-400">Pilih Target</span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                        <button @click="showTargetModal = false" class="mt-6 text-slate-400 hover:text-white text-sm">Batal Pakai</button>
                                     </div>
-                                </li>
-                            </template>
-                        </ul>
+                                </div>
+                            </div>
+
+                            <div x-show="isRolling" x-transition class="absolute left-1/2 top-0 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-cyan-300/30 bg-slate-950/90 px-4 py-2 text-sm font-bold text-cyan-100 shadow-lg backdrop-blur-sm"> <span class="h-2 w-2 animate-pulse rounded-full bg-cyan-300"></span> Mengirim lemparan ke server…</div>
+
+                            <div x-show="rollResultNotice.show" x-cloak class="nb-roll-result-burst pointer-events-none absolute left-1/2 top-[16%] z-20 -translate-x-1/2 text-center">
+                                <p class="text-xs uppercase tracking-[0.3em] text-yellow-200 font-black drop-shadow-lg">Rolled</p>
+                                <div class="text-7xl md:text-8xl font-black text-yellow-300 drop-shadow-[0_0_26px_rgba(250,204,21,0.75)]" x-text="rollResultNotice.value"></div>
+                            </div>
+
+                            <div class="mx-auto flex min-h-[260px] max-w-2xl flex-col items-center justify-center rounded-[2rem] border border-cyan-200/15 bg-slate-950/20 p-6 backdrop-blur-[2px]">
+                                <div class="flex justify-center gap-6">
+                                    <template x-for="(diceVal, idx) in visibleDiceValues()" :key="idx">
+                                        <div class="scene">
+                                            <div class="dice" :class="[isAnimating ? 'rolling' : '', diceVal > 0 && !isAnimating ? 'show-' + diceVal : 'show-1']">
+                                                <div class="dice-face face-1"><div class="dot" style="grid-area: 2/2"></div></div>
+                                                <div class="dice-face face-2"><div class="dot" style="grid-area: 1/1"></div><div class="dot" style="grid-area: 3/3"></div></div>
+                                                <div class="dice-face face-3"><div class="dot" style="grid-area: 1/1"></div><div class="dot" style="grid-area: 2/2"></div><div class="dot" style="grid-area: 3/3"></div></div>
+                                                <div class="dice-face face-4"><div class="dot" style="grid-area: 1/1"></div><div class="dot" style="grid-area: 1/3"></div><div class="dot" style="grid-area: 3/1"></div><div class="dot" style="grid-area: 3/3"></div></div>
+                                                <div class="dice-face face-5"><div class="dot" style="grid-area: 1/1"></div><div class="dot" style="grid-area: 1/3"></div><div class="dot" style="grid-area: 2/2"></div><div class="dot" style="grid-area: 3/1"></div><div class="dot" style="grid-area: 3/3"></div></div>
+                                                <div class="dice-face face-6"><div class="dot" style="grid-area: 1/1"></div><div class="dot" style="grid-area: 2/1"></div><div class="dot" style="grid-area: 3/1"></div><div class="dot" style="grid-area: 1/3"></div><div class="dot" style="grid-area: 2/3"></div><div class="dot" style="grid-area: 3/3"></div></div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <h2 class="mt-6 text-3xl font-black text-white">
+                                    <span x-show="currentTurn === currentPlayerId" class="text-cyan-200">It's Your Turn!</span>
+                                    <span x-show="currentTurn !== currentPlayerId">Waiting for <span class="text-amber-200" x-text="getCurrentPlayerName().slice(0, 25)" :title="getCurrentPlayerName()"></span>...</span>
+                                </h2>
+                                <p class="mt-2 text-slate-300" x-show="hasLastRoll()"><span class="font-bold text-white" x-text="lastRollerName.slice(0, 25)" :title="lastRollerName"></span> just rolled <span class="font-black text-yellow-300" x-text="recentDice.join(' & ')"></span>!</p>
+                            </div>
+                        </div>
+
+                        <div x-show="status === 'finished'" x-cloak class="mx-auto max-w-2xl rounded-[2rem] border border-yellow-300/35 bg-slate-950/75 p-8 shadow-2xl">
+                            <div class="text-7xl">🏆</div>
+                            <h2 class="mt-3 text-5xl font-black text-yellow-200">Game Over!</h2>
+                            <ul class="mt-6 space-y-2 text-left">
+                                <template x-for="(bp, index) in leaderboard" :key="index">
+                                    <li class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3" :class="{'text-yellow-200 ring-2 ring-yellow-300/50': index === 0}">
+                                        <span class="font-black"><span x-text="index === 0 ? '👑' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : ''))"></span> <span x-text="bp.name.slice(0, 25)" :title="bp.name"></span></span>
+                                        <span class="font-mono text-xl font-black" x-text="bp.score"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                            <a href="#" @click.prevent="leaveRoom" class="mt-6 inline-flex items-center gap-2 text-slate-300 underline hover:text-white"><span x-show="loadingLeave" class="nb-btn-spinner"></span><span x-text="loadingLeave ? 'Keluar…' : 'Leave Room'"></span></a>
+                        </div>
                     </div>
 
-                    <a href="#" @click.prevent="leaveRoom" :class="loadingLeave ? 'opacity-50 pointer-events-none' : ''"
-                        class="inline-flex items-center gap-2 mt-8 text-slate-400 hover:text-white transition underline">
-                        <span x-show="loadingLeave" class="nb-btn-spinner"></span>
-                        <span x-text="loadingLeave ? 'Keluar…' : 'Leave Room'"></span>
-                    </a>
-                </div>
+                    <div class="hand-zone -mx-4 rounded-b-[38px] px-5 pt-4 pb-8 md:-mx-8 md:px-8 md:pb-10">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div class="min-w-0 flex-1">
+                                <div class="mb-2 flex items-center justify-between gap-3">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-100/70">Your Hand</p>
+                                    <p class="text-xs text-slate-400" x-show="currentTurn === currentPlayerId">Roll dulu, lalu akhiri giliran.</p>
+                                </div>
+                                <div class="flex min-h-[210px] items-start gap-3 overflow-x-auto px-1 pt-4 pb-10">
+                                    <template x-if="myInventory.length === 0">
+                                        <div class="flex min-h-[120px] min-w-full items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/5 text-sm text-slate-400">Inventory kosong. Kartu yang kamu pilih akan tampil sebagai hand.</div>
+                                    </template>
+                                    <template x-for="(cid, index) in myInventory" :key="'hand-' + index">
+                                        <button @click="openCardConfirm(cid)" class="hand-card nb-card-shell min-w-[92px] max-w-[110px] cursor-pointer p-2 text-left" :style="`--tilt: ${(index % 5 - 2) * 2.5}deg`" :class="[((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'trap' : 'spell', (!isUsingCard && canUseCard(cid)) ? '' : 'opacity-50 grayscale cursor-not-allowed']">
+                                            <div class="mb-1 truncate text-[10px] font-black text-slate-100" x-text="(cardCatalog.find(c => c.id === cid) || {}).name || cid"></div>
+                                            <div class="nb-card-art h-[54px] mb-1"><span class="card-image" x-html="cardArtHtml(cardCatalog.find(c => c.id === cid) || {}, 'sm')"></span></div>
+                                            <p class="line-clamp-2 text-[8px] leading-tight text-slate-200" x-text="(cardCatalog.find(c => c.id === cid) || {}).description"></p>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row lg:flex-col">
+                                <button x-show="currentTurn === currentPlayerId" @click="rollDice" :disabled="isRolling || isAnimating || (me() && me().hasRolledThisTurn)" class="command-orb inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-500 to-amber-500 px-8 py-4 text-lg font-black uppercase tracking-wider text-white transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50">
+                                    <span x-show="isRolling" class="nb-btn-spinner"></span><span x-text="isRolling ? 'Rolling…' : 'ROLL DICE'"></span>
+                                </button>
+                                <button x-show="currentTurn === currentPlayerId" @click="endTurn" :disabled="isEndingTurn || !me() || !me().hasRolledThisTurn" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-300/30 bg-emerald-500/15 px-7 py-3 font-black text-emerald-100 transition hover:bg-emerald-400/25 disabled:cursor-not-allowed disabled:opacity-50">
+                                    <span x-show="isEndingTurn" class="nb-btn-spinner"></span><span x-text="isEndingTurn ? 'Mengakhiri…' : 'Akhiri Giliran'"></span>
+                                </button>
 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Card Confirm Modal -->
+        <div x-show="cardConfirm.show" x-cloak @click.self="closeCardConfirm()"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-950/82 backdrop-blur-md">
+            <div class="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-cyan-300/30 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/80 p-5 shadow-[0_0_80px_rgba(34,211,238,0.18)] md:p-6"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-4 scale-95">
+                <div class="absolute inset-x-0 top-0 h-1" :class="cardConfirm.card?.type === 'trap' ? 'bg-red-400' : 'bg-emerald-400'"></div>
+                <button type="button" @click="closeCardConfirm()" class="absolute right-4 top-4 z-10 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-white/80 transition hover:bg-white/20 hover:text-white">Tutup</button>
+
+                <div class="grid gap-5 md:grid-cols-[180px_1fr] md:items-center">
+                    <div class="mx-auto w-[170px]">
+                        <div class="nb-card-shell min-h-[250px] p-3" :class="cardConfirm.card?.type === 'trap' ? 'trap' : 'spell'">
+                            <div class="mb-2 truncate text-xs font-black text-slate-100" x-text="cardConfirm.card?.name || cardConfirm.cardId || 'Kartu'"></div>
+                            <div class="nb-card-art h-[110px] mb-2"><span class="card-image" x-html="cardArtHtml(cardConfirm.card || {}, 'md')"></span></div>
+                            <div class="nb-card-desc-box text-[10px] leading-tight text-slate-200" x-text="cardConfirm.card?.description || 'Tidak ada deskripsi.'"></div>
+                        </div>
+                    </div>
+
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black uppercase tracking-[0.35em]" :class="cardConfirm.card?.type === 'trap' ? 'text-red-200/80' : 'text-emerald-200/80'" x-text="cardConfirm.card?.type === 'trap' ? 'Trap Card Preview' : 'Spell Card Preview'"></p>
+                        <h3 class="mt-2 text-3xl font-black leading-tight text-white md:text-5xl" x-text="cardConfirm.card?.name || cardConfirm.cardId || 'Kartu'"></h3>
+                        <p class="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm leading-relaxed text-slate-200 md:text-base" x-text="cardConfirm.card?.description || 'Efek kartu akan divalidasi oleh server saat diaktifkan.'"></p>
+                        <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                            <button type="button" @click="confirmUseCard()" :disabled="isUsingCard || !canUseCard(cardConfirm.cardId)" class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-6 py-3 font-black uppercase tracking-wider text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100">
+                                <span x-show="isUsingCard" class="nb-btn-spinner"></span>
+                                <span x-text="isUsingCard ? 'Mengaktifkan…' : 'Aktifkan Kartu'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1489,7 +1564,7 @@
                         </div>
                     </template>
                     <template x-for="(cid, index) in myInventory" :key="'mine-' + index">
-                        <div @click="(!isUsingCard && canUseCard(cid)) ? useCard(cid) : null"
+                        <div @click="openCardConfirm(cid)"
                             class="nb-card-shell cursor-pointer transition-all duration-200 min-h-[140px] p-2.5 relative group mx-auto w-full max-w-[140px]"
                             :class="[
                                 ((cardCatalog.find(c => c.id === cid) || {}).type) === 'trap' ? 'trap' : 'spell',
@@ -1804,6 +1879,11 @@
                 isUsingCard: false,
                 showShopModal: false,
                 showInventoryModal: false,
+                cardConfirm: {
+                    show: false,
+                    cardId: null,
+                    card: null,
+                },
                 pendingTrapConfirmations: @json($room->pending_trap_confirmations ?? []),
                 // Versi Supabase/DB Lama:
                 // trapTargetPlayerId: {{ $room->trap_target_player_id ?? 'null' }},
@@ -1849,7 +1929,9 @@
                     targetName: '',
                     isRandom: false,
                     animationKey: 0,
-                    timeout: null
+                    timeout: null,
+                    floatTimeout: null,
+                    isFloating: false,
                 },
                 toast: {
                     show: false,
@@ -2142,7 +2224,9 @@
 
                 effectCardArtHtml(card, type = 'spell') {
                     if (card && card.image_url) {
-                        return card.image_url;
+                        const safeUrl = this.escapeHtml(card.image_url);
+                        const safeName = this.escapeHtml(card.name || 'Kartu');
+                        return `<img src="${safeUrl}" alt="${safeName}" loading="eager" decoding="sync">`;
                     }
 
                     const safeCardId = this.escapeHtml(card?.id || 'unknown-card');
@@ -2335,6 +2419,26 @@
                     }
                 },
 
+                openCardConfirm(cardId) {
+                    const card = this.cardCatalog.find(c => c.id === cardId) || { id: cardId, name: cardId, type: 'spell' };
+                    this.cardConfirm.cardId = cardId;
+                    this.cardConfirm.card = card;
+                    this.cardConfirm.show = true;
+                },
+
+                closeCardConfirm() {
+                    this.cardConfirm.show = false;
+                    this.cardConfirm.cardId = null;
+                    this.cardConfirm.card = null;
+                },
+
+                async confirmUseCard() {
+                    const cardId = this.cardConfirm.cardId;
+                    if (!cardId) return;
+                    this.closeCardConfirm();
+                    await this.useCard(cardId);
+                },
+
                 async useCard(cardId) {
                     if (!this.canUseCard(cardId, this.currentPlayerId)) {
                         this.notify('Timing kartu ini belum cocok, sabar dikit.', 'error');
@@ -2525,6 +2629,11 @@
                     const card = this.cardCatalog.find((item) => item.id === payload.cardId) || {};
                     const type = payload.cardType || card.type || 'spell';
                     this.effectNotice.show = false;
+                    this.effectNotice.isFloating = false;
+                    if (this.effectNotice.floatTimeout) {
+                        clearTimeout(this.effectNotice.floatTimeout);
+                        this.effectNotice.floatTimeout = null;
+                    }
                     this.effectNotice.type = type;
                     this.effectNotice.icon = card.icon || (type === 'trap' ? '!' : '✦');
                     this.effectNotice.cardName = payload.cardName || card.name || 'Kartu';
@@ -2542,6 +2651,10 @@
                     this.deferCardEffectPlayerSync = true;
                     this.$nextTick(() => {
                         this.effectNotice.show = true;
+                        this.effectNotice.floatTimeout = setTimeout(() => {
+                            this.effectNotice.isFloating = true;
+                            this.effectNotice.floatTimeout = null;
+                        }, 1650);
                     });
                     this.effectNotice.timeout = setTimeout(() => {
                         this.closeEffectNotice();
@@ -2553,8 +2666,13 @@
                         clearTimeout(this.effectNotice.timeout);
                         this.effectNotice.timeout = null;
                     }
+                    if (this.effectNotice.floatTimeout) {
+                        clearTimeout(this.effectNotice.floatTimeout);
+                        this.effectNotice.floatTimeout = null;
+                    }
 
                     this.effectNotice.show = false;
+                    this.effectNotice.isFloating = false;
                     this.deferCardEffectPlayerSync = false;
 
                     if (this.pendingEffectFlushTimeout) {
